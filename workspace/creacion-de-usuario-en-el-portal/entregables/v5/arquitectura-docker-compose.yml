@@ -1,0 +1,41 @@
+# Generado por Trama a partir de la arquitectura aprobada.
+# Uso: copie .env.example a .env y ejecute `docker compose up --build`.
+services:
+  portal-web-local:
+    build:
+      context: ./frontend
+    environment:
+      API_URL: ${API_URL}
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api-backend-local
+  api-backend-local:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      AD_ADMIN_EMAIL: ${AD_ADMIN_EMAIL}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - base-de-datos-postgresql-local
+  base-de-datos-postgresql-local:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+    volumes:
+      - base-de-datos-postgresql-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-app}"]
+      interval: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+volumes:
+  base-de-datos-postgresql-local-data:

@@ -1,0 +1,21 @@
+.env
+backend/.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+storage/
+output/
+workspace/quality/
+tmp/
+*.log
+workspace/*/aplicacion/*/.env
+
+# Entregas generadas: el código se versiona sin secretos
+workspace/**/.env
+infraestructura-local/instancias/**/.env
+infraestructura-local/instancias/**/compose.yaml
