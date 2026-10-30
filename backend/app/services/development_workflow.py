@@ -48,9 +48,18 @@ class DevelopmentWorkflow:
                 "SELECT 1 FROM executions WHERE project_id=%s AND status IN ('pendiente','ejecutando') LIMIT 1", (pid,)
             )).fetchone():
                 raise ValueError("Espere a que termine la ejecución activa del proyecto")
-            rid, cid = str(uuid4()), str(uuid4())
-            await conn.execute("INSERT INTO conversations(id,project_id,title) VALUES(%s,%s,%s)",
-                               (cid, pid, "Desarrollo: " + request["objetivo"][:55]))
+            rid = str(uuid4())
+            # One conversation per project: keep the analyst's whole history in a single
+            # thread instead of fragmenting it into a new chat on every flow started.
+            existing = await (await conn.execute(
+                "SELECT id FROM conversations WHERE project_id=%s ORDER BY created_at DESC LIMIT 1 FOR UPDATE", (pid,)
+            )).fetchone()
+            if existing:
+                cid = str(existing["id"])
+            else:
+                cid = str(uuid4())
+                await conn.execute("INSERT INTO conversations(id,project_id,title) VALUES(%s,%s,%s)",
+                                   (cid, pid, "Desarrollo: " + request["objetivo"][:55]))
             await conn.execute(
                 "INSERT INTO executions(id,project_id,kind,request_id,input) VALUES(%s,%s,'flujo_completo',%s,%s)",
                 (rid, pid, request["id_solicitud"], Jsonb(request)),
@@ -78,9 +87,6 @@ class DevelopmentWorkflow:
             project = await (await conn.execute("SELECT mode FROM projects WHERE id=%s AND deleted_at IS NULL FOR UPDATE", (pid,))).fetchone()
             if not project:
                 raise LookupError("Proyecto no encontrado")
-            if project["mode"] != workflow["modo"]:
-                await conn.execute("UPDATE development_workflows SET mode=%s,updated_at=now() WHERE id=%s", (project["mode"], rid))
-                await conn.execute("INSERT INTO events(execution_id,component,operation,status,description,data) VALUES(%s,'coordinador','cambiar_modo','completado','Se continúa con el modo elegido para el proyecto',%s)", (rid, Jsonb({"anterior": workflow["modo"], "nuevo": project["mode"]})))
             active = await (await conn.execute(
                 "SELECT 1 FROM executions WHERE project_id=%s AND status IN ('pendiente','ejecutando')", (pid,)
             )).fetchone()
@@ -177,9 +183,7 @@ class DevelopmentWorkflow:
                      for v in values if isinstance(v, dict) and "id" in v and "version" in v]
             if functional_fingerprint(items) == functional_fingerprint(active):
                 return latest["version"]
-        if workflow["modo"] == "supervisado":
-            raise WorkflowPause("requisitos", "Publique la línea base revisada para continuar.", "/state")
-        return (await self.app.state.projects.publish(pid, False))["version_linea_base"]
+        raise WorkflowPause("requisitos", "Publique la línea base revisada para continuar.", "/state")
 
     async def phase(self, pid, rid, progress, name, source, **extra_source):
         from app.api.architecture import run_architecture

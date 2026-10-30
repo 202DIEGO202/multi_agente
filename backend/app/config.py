@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     backlog_max_tokens: int = Field(default=4096, ge=1024, le=32768)
     architecture_max_tokens: int = Field(default=6144, ge=1024, le=32768)
     construction_max_tokens: int = Field(default=12000, ge=2048, le=32768)
+    # Modelo específico para la fase de construcción (vacío = usa llm_model).
+    # Permite usar un modelo más robusto solo donde se genera código real.
+    construction_model: str = ""
+    # Timeout por intento específico para construcción (Sol tarda más que el modelo mini
+    # en la etapa de pruebas; con el timeout general de 180s fallaba sistemáticamente).
+    construction_timeout: float = Field(default=420, gt=0)
     workspace_dir: Path = ROOT / "workspace"
     # Catálogo de tecnologías que los arquitectos pueden proponer (ARCHITECTURE_TECHNOLOGIES en .env).
     architecture_technologies: list[str] = [

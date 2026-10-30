@@ -255,13 +255,6 @@ class BacklogService:
                     ),
                 ),
             )
-            if project["mode"] == "automatico" and content["validacion"]["puede_publicar"]:
-                await self._record_decision(
-                    conn,
-                    content,
-                    "validado_automaticamente",
-                    "Validación automática conforme a las reglas configuradas",
-                )
         return content
 
     async def list(self, project_id):

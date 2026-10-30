@@ -7,7 +7,6 @@ import { filter, map, startWith } from 'rxjs';
 <section class="section-navigation" [attr.aria-label]="workflow?'Flujo de desarrollo':'Conocimiento y actividad'">
 <div class="section-navigation-heading"><div><div class="eyebrow">{{workflow?'FLUJO DE DESARROLLO':'CONOCIMIENTO Y ACTIVIDAD'}}</div><h2>{{workflow?'Una idea, paso a paso.':'Documentos, búsquedas y registros.'}}</h2></div><span class="section-navigation-note">{{workflow?'Cada etapa parte de la anterior':'Todo el contexto de tu proyecto'}}</span></div>
 <nav [attr.aria-label]="workflow?'Etapas del desarrollo':'Secciones de conocimiento y actividad'" [class.workflow-navigation]="workflow" [class.resource-navigation]="!workflow">
-@if(workflow){<a routerLink="/workflow" routerLinkActive="selected"><span class="section-tab-copy"><strong>Desarrollo completo</strong><small>Automático o manual</small></span></a>}
 @for(item of items;track item.path){<a [routerLink]="item.path" [queryParamsHandling]="workflow?'':'preserve'" routerLinkActive="selected" [routerLinkActiveOptions]="{exact:true}" [attr.aria-current]="currentPath()===item.path?'page':null">
 @if(workflow){<span class="stage-number">{{item.number}}</span>}<span class="section-tab-copy"><strong>{{item.label}}</strong><small>{{item.subtitle}}</small></span>@if(workflow&&item.number<6){<span class="stage-arrow" aria-hidden="true">→</span>}</a>}
 </nav>

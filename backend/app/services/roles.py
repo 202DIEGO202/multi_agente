@@ -16,6 +16,11 @@ PRIVILEGED = {
     "jefe",
     "gestor",
     "director",
+    # "Talento Humano" (RR. HH.) aprueba/valida solicitudes como segundo nivel, pero ninguna
+    # palabra anterior lo detectaba: la historia caía como actor no privilegiado y su pantalla
+    # terminaba asignada al portal del empleado en vez de al panel de aprobadores.
+    "talento",
+    "rrhh",
 }
 
 # Un validador con modelo a veces "reporta" lo que está bien. Eso no es un hallazgo: es ruido que

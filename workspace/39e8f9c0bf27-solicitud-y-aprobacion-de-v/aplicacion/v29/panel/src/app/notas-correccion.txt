@@ -1,0 +1,1 @@
+Los bloqueos reportados pertenecen al portal del empleado, al backend y a la base de datos. El panel ya envía Authorization: Bearer en sus peticiones administrativas. No se requieren cambios en sus componentes.

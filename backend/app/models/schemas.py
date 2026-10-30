@@ -41,7 +41,6 @@ PREFIX = {
 class ProjectCreate(Contract):
     nombre: Annotated[str, Field(min_length=2, max_length=160)]
     descripcion: str = Field(default="", max_length=4000)
-    modo: Literal["supervisado", "automatico"] = "supervisado"
 
 
 class MessageCreate(Contract):
@@ -149,6 +148,10 @@ class Review(Contract):
 
 class ConflictResolution(Contract):
     resolucion: Annotated[str, Field(min_length=5, max_length=4000)]
+
+
+class QuestionAnswer(Contract):
+    respuesta: Annotated[str, Field(min_length=3, max_length=4000)]
 
 
 class PublishBaseline(Contract):

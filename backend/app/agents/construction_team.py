@@ -22,7 +22,7 @@ from app.models.construction import (
     QaBundle,
 )
 from app.providers import ProviderError
-from app.services.construction_rules import errors_of, screen_labels, validate
+from app.services.construction_rules import ALLOWED_PY, errors_of, screen_labels, validate
 from app.services.roles import drop_confirmations
 from app.services.runtime_check import run_check
 from app.services.scaffold import scaffold_files
@@ -36,7 +36,11 @@ DATA, BACKEND, PORTAL, PANEL, TESTS, IAC = (
     "agente_iac",
 )
 REVIEW = "validador_artefactos"
-MAX_CORRECTIONS = 2
+# 2 se quedaba corto cuando una corrección toca varios requisitos a la vez en el mismo
+# archivo (persistencia + autenticación + no regresar un hallazgo ya resuelto): el ciclo
+# se agotaba y el resultado parcial quedaba pendiente para una ejecución nueva, sin memoria
+# de lo ya corregido en esta.
+MAX_CORRECTIONS = 3
 KEY = {
     DATA: "data",
     BACKEND: "backend",
@@ -91,7 +95,11 @@ INSTR = {
         "transiciones de estado válidas. Usa consultas parametrizadas y transacciones para cambios relacionados; "
         "evita reservas duplicadas o saldos negativos con restricciones y actualizaciones atómicas. Usa 409 para "
         "conflictos de estado y 422 para entradas inválidas. (5) Modelos Pydantic; si el dominio exige "
-        "registrar quién decide y cuándo, guárdalo. Devuelve los endpoints con su acceso y las historias que atienden."
+        "registrar quién decide y cuándo, guárdalo. Devuelve los endpoints con su acceso y las historias que atienden. "
+        "(6) Solo puedes importar, además de la librería estándar de Python, estos paquetes: "
+        + ", ".join(sorted(ALLOWED_PY - {"app", "pytest"})) + ". No existe ningún otro paquete de terceros "
+        "instalado (ni cryptography, passlib, jose, bcrypt, PyJWT ni similares): la comparación de tokens con "
+        "hmac.compare_digest descrita arriba ya es suficiente y no necesita ninguna librería de criptografía."
     ),
     PORTAL: (
         "Eres el desarrollador del portal de usuarios (Angular 21 standalone). Sus actores y funciones los "
@@ -257,7 +265,7 @@ class ConstructionTeam:
             "ejecutando",
             "Agente trabajando",
             {
-                "modelo": self.models.settings.llm_model,
+                "modelo": self.models.settings.construction_model or self.models.settings.llm_model,
                 "historias": [h["id"] for h in data.get("historias", [])][:20],
                 "pantallas": [s["id"] for s in data.get("pantallas", [])][:20],
             },
@@ -269,6 +277,7 @@ class ConstructionTeam:
                     {"role": "user", "content": json.dumps(data, ensure_ascii=False, default=str)},
                 ],
                 schema,
+                construction=True,
                 max_tokens=self.models.settings.construction_max_tokens,
                 max_attempts=2,
                 usage=usage,
@@ -282,6 +291,8 @@ class ConstructionTeam:
                 "El agente no entregó un contrato válido",
                 {
                     "tipo_error": type(exc).__name__,
+                    "mensaje": str(exc),
+                    "estado_http": getattr(exc, "status", None),
                     "errores": getattr(exc, "validation_errors", []),
                 },
             )
@@ -396,9 +407,10 @@ class ConstructionTeam:
         )
         if fixing:
             existing = {f["ruta"]: f for f in current.get("archivos", [])}
-            retired = set(value.get("archivos_retirados", []))
-            if retired - existing.keys():
-                raise TechnicalConstructionError("Se intentó retirar un archivo ajeno al componente")
+            requested = set(value.get("archivos_retirados", []))
+            # Un path inexistente en el componente no es destructivo: retirarlo es un no-op.
+            # Antes esto abortaba toda la construcción si el modelo alucinaba una ruta ajena.
+            retired = requested & existing.keys()
             for path in retired:
                 existing.pop(path)
             existing.update({f["ruta"]: f for f in value["archivos"]})
@@ -435,6 +447,17 @@ class ConstructionTeam:
             for key in ("portal", "panel"):
                 reused[key]["pantallas"] = previous["pantallas"].get(key, [])
             await self.emit(state, "fase_5", "recuperar_candidato", "completado", "Código anterior recuperado para corregir y verificar sin regenerar todos los agentes", {"version_origen": previous["version_construccion"]})
+            # Sin esto, la interfaz mostraba "En espera" en los agentes reutilizados (como si no
+            # hubieran corrido nunca), aunque su código ya esté validado y listo: solo el agente
+            # que de verdad necesita corregir algo vuelve a llamar al modelo.
+            for key, agent in {"data": DATA, "backend": BACKEND, "portal": PORTAL, "panel": PANEL, "tests": TESTS, "iac": IAC}.items():
+                await self.emit(
+                    state,
+                    agent,
+                    "reutilizar",
+                    "completado",
+                    "Reutilizado de la versión anterior (sin cambios en esta corrección)",
+                )
         return {
             **reused,
             "corrections": 0,

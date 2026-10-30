@@ -1,0 +1,42 @@
+# Generado por Trama a partir de la arquitectura aprobada.
+# Uso: copie .env.example a .env y ejecute `docker compose up --build`.
+services:
+  portal-interno-de-solicitudes:
+    build:
+      context: ./frontend
+    environment:
+      API_BASE_URL: ${API_BASE_URL}
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api-de-gestion-de-ausencias
+  api-de-gestion-de-ausencias:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      AUDIT_LOG_LEVEL: ${AUDIT_LOG_LEVEL}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - base-de-datos-de-ausencias
+  base-de-datos-de-ausencias:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+    volumes:
+      - base-de-datos-de-ausencias-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-app}"]
+      interval: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+volumes:
+  base-de-datos-de-ausencias-data:

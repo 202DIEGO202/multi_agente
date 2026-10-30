@@ -1,0 +1,1829 @@
+{
+  "plan": {
+    "tareas": [
+      {
+        "id": "TT-001",
+        "rol": "devops",
+        "titulo": "Preparar entorno local de desarrollo y ejecución",
+        "esfuerzo": "M",
+        "depende_de": [],
+        "descripcion": "Configurar el entorno local para levantar Angular+Nginx, FastAPI y PostgreSQL con variables de entorno, red local y dependencias base. Dejar documentados los pasos para ejecutar el sistema en local.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-002",
+          "CM-003",
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010"
+        ],
+        "criterios_terminado": [
+          "Se puede levantar el frontend localmente con Angular + Nginx.",
+          "Se puede levantar la API localmente con FastAPI.",
+          "PostgreSQL local está accesible desde la API.",
+          "Las variables de entorno locales están definidas y documentadas sin exponer secretos.",
+          "Existe guía de arranque local reproducible."
+        ]
+      },
+      {
+        "id": "TT-002",
+        "rol": "datos",
+        "titulo": "Definir y crear el esquema de datos inicial",
+        "esfuerzo": "L",
+        "depende_de": [
+          "TT-001"
+        ],
+        "descripcion": "Diseñar e implementar en PostgreSQL las tablas y relaciones para solicitudes, historial, aprobaciones, observaciones, versiones, notificaciones, catálogo y auditoría. Incluir restricciones, claves, índices y migraciones iniciales.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-016",
+          "CM-017",
+          "CM-012",
+          "CM-013",
+          "CM-014"
+        ],
+        "criterios_terminado": [
+          "Las tablas del esquema están creadas en PostgreSQL.",
+          "Las relaciones y restricciones principales están aplicadas.",
+          "Existen migraciones iniciales versionadas.",
+          "El modelo soporta persistencia de solicitudes, historial, catálogo, auditoría y notificaciones.",
+          "Se valida integridad básica con datos de ejemplo."
+        ]
+      },
+      {
+        "id": "TT-003",
+        "rol": "backend",
+        "titulo": "Implementar la base del backend FastAPI",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-001",
+          "TT-002"
+        ],
+        "descripcion": "Crear la estructura modular de la API, configuración, manejo de errores, validaciones comunes, contratos JSON y conexión al esquema de datos.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010",
+          "CM-011",
+          "CM-012",
+          "CM-013"
+        ],
+        "criterios_terminado": [
+          "La API arranca y conecta a la base de datos.",
+          "Existe estructura modular por dominios de solicitudes, revisiones, catálogo, notificaciones y auditoría.",
+          "Hay manejo consistente de errores y validación de entrada.",
+          "Los contratos de request/response quedan definidos y documentados.",
+          "Se puede consultar el estado de salud de la API."
+        ]
+      },
+      {
+        "id": "TT-004",
+        "rol": "backend",
+        "titulo": "Implementar repositorios de persistencia",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-002",
+          "TT-003"
+        ],
+        "descripcion": "Desarrollar los repositorios para solicitudes, catálogo y auditoría, encapsulando acceso a PostgreSQL y operaciones transaccionales requeridas por los servicios.",
+        "ids_historias": [
+          "HU-001",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-012",
+          "CM-013",
+          "CM-014"
+        ],
+        "criterios_terminado": [
+          "Los repositorios realizan insert, update, consulta y listado según cada dominio.",
+          "Las operaciones críticas usan transacciones cuando aplica.",
+          "Las consultas devuelven datos compatibles con los servicios.",
+          "Existen pruebas unitarias de repositorio con base de datos de prueba."
+        ]
+      },
+      {
+        "id": "TT-005",
+        "rol": "backend",
+        "titulo": "Implementar servicio y controlador de solicitudes",
+        "esfuerzo": "L",
+        "depende_de": [
+          "TT-003",
+          "TT-004"
+        ],
+        "descripcion": "Construir la lógica de creación, consulta, edición, eliminación e historial de solicitudes, incluyendo validación de campos obligatorios y reglas por tipo de ausencia.",
+        "ids_historias": [
+          "HU-001"
+        ],
+        "ids_componentes": [
+          "CM-004",
+          "CM-007",
+          "CM-012",
+          "CM-011"
+        ],
+        "criterios_terminado": [
+          "POST /solicitudes crea solicitudes válidas.",
+          "GET /solicitudes/{id} y GET /solicitudes?estado&solicitante devuelven información correcta.",
+          "GET /solicitudes/{id}/historial devuelve el historial persistido.",
+          "PUT y DELETE funcionan según reglas de negocio definidas.",
+          "Se registran eventos de auditoría para accesos y consultas sensibles."
+        ]
+      },
+      {
+        "id": "TT-006",
+        "rol": "backend",
+        "titulo": "Implementar servicio y controlador de revisiones",
+        "esfuerzo": "L",
+        "depende_de": [
+          "TT-003",
+          "TT-004"
+        ],
+        "descripcion": "Desarrollar la bandeja de pendientes, aprobación, rechazo y validación con control optimista, registro de observaciones y cambio de estado.",
+        "ids_historias": [
+          "HU-003",
+          "HU-004"
+        ],
+        "ids_componentes": [
+          "CM-005",
+          "CM-008",
+          "CM-012",
+          "CM-014",
+          "CM-011"
+        ],
+        "criterios_terminado": [
+          "GET /revisiones/pendientes y GET /revisiones/mi-bandeja funcionan.",
+          "POST /solicitudes/{id}/aprobar y /rechazar cambian el estado correctamente.",
+          "POST /solicitudes/{id}/validar aplica validación de Talento Humano.",
+          "El control optimista rechaza versiones desactualizadas.",
+          "Se registran decisiones y auditoría asociada."
+        ]
+      },
+      {
+        "id": "TT-007",
+        "rol": "backend",
+        "titulo": "Implementar servicio y controlador de catálogo",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-003",
+          "TT-004"
+        ],
+        "descripcion": "Desarrollar CRUD de tipos de ausencia y la asignación del flujo de aprobación, con persistencia y auditoría de cambios.",
+        "ids_historias": [
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-006",
+          "CM-009",
+          "CM-013",
+          "CM-011"
+        ],
+        "criterios_terminado": [
+          "GET/POST/PUT/DELETE de tipos de ausencia funcionan.",
+          "PUT /tipos-ausencia/{id}/flujo guarda la configuración del flujo.",
+          "Las operaciones quedan auditadas.",
+          "La API devuelve validaciones cuando faltan datos obligatorios."
+        ]
+      },
+      {
+        "id": "TT-008",
+        "rol": "backend",
+        "titulo": "Implementar servicio de notificaciones e integración SMTP",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-003",
+          "TT-004",
+          "TT-006"
+        ],
+        "descripcion": "Construir la generación de notificaciones y el envío de correos ante cambios de estado y pendientes de revisión, conectando con el SMTP corporativo como servicio externo.",
+        "ids_historias": [
+          "HU-002"
+        ],
+        "ids_componentes": [
+          "CM-010",
+          "CM-015",
+          "CM-012"
+        ],
+        "criterios_terminado": [
+          "Se persisten notificaciones en la base de datos.",
+          "Se envían correos mediante SMTP externo.",
+          "Se registra el resultado de envío.",
+          "Se genera aviso de cambio de estado y de pendientes de revisión.",
+          "Los fallos de correo quedan trazables sin bloquear el flujo principal."
+        ]
+      },
+      {
+        "id": "TT-009",
+        "rol": "frontend",
+        "titulo": "Implementar módulo UI de solicitudes",
+        "esfuerzo": "L",
+        "depende_de": [
+          "TT-003",
+          "TT-005"
+        ],
+        "descripcion": "Construir las pantallas de registro, consulta de estado, historial y detalle de solicitudes, consumiendo la API.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-004",
+          "CM-007"
+        ],
+        "criterios_terminado": [
+          "El empleado puede crear una solicitud desde la UI.",
+          "El empleado puede consultar estado, historial y detalle.",
+          "La UI muestra errores de validación de forma clara.",
+          "La navegación básica entre listados y detalle funciona."
+        ]
+      },
+      {
+        "id": "TT-010",
+        "rol": "frontend",
+        "titulo": "Implementar módulo UI de revisión",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-003",
+          "TT-006"
+        ],
+        "descripcion": "Construir la bandeja de revisión, vista de pendientes y acciones de aprobar, rechazar y registrar observación para jefe inmediato y Talento Humano.",
+        "ids_historias": [
+          "HU-003",
+          "HU-004"
+        ],
+        "ids_componentes": [
+          "CM-002",
+          "CM-005",
+          "CM-008"
+        ],
+        "criterios_terminado": [
+          "Se listan solicitudes pendientes desde la UI.",
+          "Se puede aprobar y rechazar una solicitud.",
+          "Se permite registrar observación.",
+          "La UI maneja el conflicto por versión desactualizada con mensaje entendible."
+        ]
+      },
+      {
+        "id": "TT-011",
+        "rol": "frontend",
+        "titulo": "Implementar módulo UI de catálogo",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-003",
+          "TT-007"
+        ],
+        "descripcion": "Construir las pantallas de administración de tipos de ausencia y configuración del flujo de aprobación.",
+        "ids_historias": [
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-003",
+          "CM-006",
+          "CM-009"
+        ],
+        "criterios_terminado": [
+          "Se listan tipos de ausencia.",
+          "Se pueden crear, editar y eliminar tipos de ausencia.",
+          "Se puede asignar el flujo de aprobación.",
+          "La UI muestra validaciones y confirmaciones básicas."
+        ]
+      },
+      {
+        "id": "TT-012",
+        "rol": "frontend",
+        "titulo": "Integrar frontend con API y flujo de autenticación funcional de sesión",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-009",
+          "TT-010",
+          "TT-011"
+        ],
+        "descripcion": "Unificar el consumo de la API en el portal, centralizar manejo de errores, estado de carga y configuración de entorno para local y nube. Si existe autenticación en el alcance técnico disponible, dejar la integración preparada sin inventar nuevos servicios.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-002",
+          "CM-003",
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010"
+        ],
+        "criterios_terminado": [
+          "El frontend consume la API por configuración de entorno.",
+          "Existe manejo común de errores y estados de carga.",
+          "Las pantallas principales funcionan con datos reales de la API.",
+          "No hay URLs hardcodeadas del entorno local."
+        ]
+      },
+      {
+        "id": "TT-013",
+        "rol": "devops",
+        "titulo": "Preparar despliegue en nube para backend, frontend y base de datos",
+        "esfuerzo": "L",
+        "depende_de": [
+          "TT-001",
+          "TT-002",
+          "TT-003"
+        ],
+        "descripcion": "Configurar los recursos cloud definidos: contenedores en AWS, RDS PostgreSQL, ALB, ECR, Secrets Manager y CloudWatch, junto con la parametrización de despliegue para Angular+Nginx y FastAPI.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-002",
+          "CM-003",
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010"
+        ],
+        "criterios_terminado": [
+          "Las imágenes de frontend y backend pueden publicarse en ECR.",
+          "Los secretos de despliegue se referencian desde Secrets Manager.",
+          "La aplicación queda preparada para correr tras el ALB.",
+          "La base de datos nube está provisionada y accesible.",
+          "CloudWatch recibe logs básicos de la aplicación."
+        ]
+      },
+      {
+        "id": "TT-014",
+        "rol": "devops",
+        "titulo": "Desplegar y validar la aplicación en nube",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-013",
+          "TT-012",
+          "TT-008"
+        ],
+        "descripcion": "Ejecutar el despliegue de frontend, backend y base de datos en el entorno cloud, verificar ruteo por ALB, conectividad y configuración de observabilidad.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-002",
+          "CM-003",
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010"
+        ],
+        "criterios_terminado": [
+          "El portal responde en el entorno nube.",
+          "La API responde detrás del balanceador.",
+          "La conexión a RDS funciona.",
+          "Los logs y métricas básicas aparecen en CloudWatch.",
+          "El despliegue queda documentado."
+        ]
+      },
+      {
+        "id": "TT-015",
+        "rol": "qa",
+        "titulo": "Ejecutar pruebas funcionales, de integración y regresión",
+        "esfuerzo": "M",
+        "depende_de": [
+          "TT-014"
+        ],
+        "descripcion": "Validar los flujos completos del sistema: creación y consulta de solicitudes, revisión, validación, notificaciones, catálogo y auditoría. Incluir pruebas de integración API-DB y API-SMTP, y regresión del portal.",
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "ids_componentes": [
+          "CM-001",
+          "CM-002",
+          "CM-003",
+          "CM-004",
+          "CM-005",
+          "CM-006",
+          "CM-007",
+          "CM-008",
+          "CM-009",
+          "CM-010"
+        ],
+        "criterios_terminado": [
+          "Existen casos de prueba para todas las historias HU-001 a HU-005.",
+          "Se validan los flujos principales en nube.",
+          "Se comprueba persistencia en base de datos y envío SMTP.",
+          "Se registran defectos y evidencias de ejecución.",
+          "Las pruebas de regresión del portal pasan sin errores críticos."
+        ]
+      }
+    ],
+    "resumen": "Plan técnico en orden de ejecución: primero preparar entorno local y esquema de datos, luego backend, frontend, integraciones, despliegue en nube y pruebas. Se cubren todos los componentes CM-001 a CM-017 usando las tecnologías indicadas."
+  },
+  "fecha": "2026-10-28T14:10:17.585002+00:00",
+  "consumo": {
+    "planificador": {
+      "ms": 17860,
+      "salida": 2888,
+      "entrada": 2875,
+      "llamadas": 1
+    },
+    "arquitecto_software": {
+      "ms": 31855,
+      "salida": 5577,
+      "entrada": 3155,
+      "llamadas": 1
+    },
+    "validador_arquitectura": {
+      "ms": 6021,
+      "salida": 732,
+      "entrada": 9964,
+      "llamadas": 1
+    },
+    "arquitecto_infraestructura": {
+      "ms": 18552,
+      "salida": 2013,
+      "entrada": 1651,
+      "llamadas": 1
+    }
+  },
+  "software": {
+    "estilo": "monolito_modular",
+    "flujos": [
+      {
+        "id": "SQ-001",
+        "pasos": [
+          {
+            "a": "CT-001",
+            "de": "ACT-003",
+            "mensaje": "Ingresa al formulario de solicitudes y captura tipo de ausencia, fechas, horas y motivo u observación si corresponde."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Envía la solicitud para validación y creación."
+          },
+          {
+            "a": "CM-004",
+            "de": "CT-002",
+            "mensaje": "Recibe la petición y la deriva al servicio de solicitudes."
+          },
+          {
+            "a": "CM-007",
+            "de": "CM-004",
+            "mensaje": "Solicita validación de obligatoriedad del motivo/observación según el tipo de ausencia."
+          },
+          {
+            "a": "CM-012",
+            "de": "CM-007",
+            "mensaje": "Persiste la solicitud, su estado inicial y el historial de creación."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-007",
+            "mensaje": "Registra auditoría de creación y, cuando el empleado consulta el historial, registra la consulta sensible con identidad del consultante."
+          },
+          {
+            "a": "CT-001",
+            "de": "CM-004",
+            "mensaje": "Devuelve confirmación de registro y el identificador para seguimiento."
+          },
+          {
+            "a": "CT-001",
+            "de": "ACT-003",
+            "mensaje": "Consulta el estado e historial de su solicitud."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Solicita el detalle de la solicitud."
+          },
+          {
+            "a": "CM-004",
+            "de": "CT-002",
+            "mensaje": "Consulta el estado, historial y observaciones asociadas."
+          }
+        ],
+        "titulo": "Registrar solicitud de vacaciones o permiso y consultar su estado",
+        "alternativa": [
+          {
+            "a": "CT-002",
+            "de": "CM-007",
+            "mensaje": "Rechaza la creación con error de validación indicando el campo faltante o inválido."
+          },
+          {
+            "a": "CT-001",
+            "de": "CT-002",
+            "mensaje": "Retorna el mensaje de error para corrección en la UI."
+          }
+        ],
+        "paso_desvio": 4,
+        "ids_historias": [
+          "HU-001"
+        ],
+        "condicion_alternativa": "La solicitud no cumple la obligatoriedad del motivo/observación o falta un dato requerido."
+      },
+      {
+        "id": "SQ-002",
+        "pasos": [
+          {
+            "a": "CM-010",
+            "de": "CM-008",
+            "mensaje": "Después de aprobar, rechazar o validar, solicita generar notificación de cambio de estado."
+          },
+          {
+            "a": "CM-015",
+            "de": "CM-010",
+            "mensaje": "Envía correo al empleado con el nuevo estado y a los aprobadores cuando existan pendientes de revisión."
+          },
+          {
+            "a": "CM-010",
+            "de": "CM-015",
+            "mensaje": "Retorna resultado de entrega del correo."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-010",
+            "mensaje": "Registra auditoría del evento de notificación y su resultado."
+          }
+        ],
+        "titulo": "Notificar cambio de estado y solicitudes pendientes",
+        "alternativa": [
+          {
+            "a": "CM-010",
+            "de": "CM-015",
+            "mensaje": "Devuelve fallo de envío para reintento o seguimiento operativo."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-010",
+            "mensaje": "Registra el intento fallido y el motivo técnico."
+          }
+        ],
+        "paso_desvio": 2,
+        "ids_historias": [
+          "HU-002"
+        ],
+        "condicion_alternativa": "El servidor SMTP no está disponible o rechaza el envío."
+      },
+      {
+        "id": "SQ-003",
+        "pasos": [
+          {
+            "a": "CT-001",
+            "de": "ACT-001",
+            "mensaje": "Accede a la bandeja de revisión."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Consulta solicitudes pendientes de revisión."
+          },
+          {
+            "a": "CM-005",
+            "de": "CT-002",
+            "mensaje": "Deriva la consulta al servicio de revisiones."
+          },
+          {
+            "a": "CM-008",
+            "de": "CM-005",
+            "mensaje": "Solicita la lista de pendientes del aprobador."
+          },
+          {
+            "a": "CM-012",
+            "de": "CM-008",
+            "mensaje": "Consulta las solicitudes pendientes asignadas al jefe inmediato."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-008",
+            "mensaje": "Registra auditoría de consulta de bandeja."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "El jefe inmediato envía decisión de aprobar o rechazar con observación y versión de la solicitud."
+          },
+          {
+            "a": "CM-005",
+            "de": "CT-002",
+            "mensaje": "Procesa la decisión mediante control optimista."
+          },
+          {
+            "a": "CM-008",
+            "de": "CM-005",
+            "mensaje": "Verifica que la versión no haya cambiado y registra la decisión."
+          },
+          {
+            "a": "CM-012",
+            "de": "CM-008",
+            "mensaje": "Actualiza estado, guarda observación e historial de la decisión."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-008",
+            "mensaje": "Registra auditoría de la aprobación o rechazo."
+          }
+        ],
+        "titulo": "Revisar y decidir solicitud como jefe inmediato",
+        "alternativa": [
+          {
+            "a": "CT-002",
+            "de": "CM-008",
+            "mensaje": "Rechaza la operación por conflicto de concurrencia."
+          },
+          {
+            "a": "CT-001",
+            "de": "CT-002",
+            "mensaje": "Informa que la solicitud ya fue modificada y debe recargarse."
+          }
+        ],
+        "paso_desvio": 8,
+        "ids_historias": [
+          "HU-003"
+        ],
+        "condicion_alternativa": "La versión de la solicitud cambió porque otra persona ya la decidió."
+      },
+      {
+        "id": "SQ-004",
+        "pasos": [
+          {
+            "a": "CT-001",
+            "de": "ACT-002",
+            "mensaje": "Accede a la bandeja de validación."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Consulta solicitudes que requieren validación o aprobación por política o caso."
+          },
+          {
+            "a": "CM-005",
+            "de": "CT-002",
+            "mensaje": "Deriva la acción al servicio de revisiones."
+          },
+          {
+            "a": "CM-008",
+            "de": "CM-005",
+            "mensaje": "Solicita validación o aprobación con la versión actual de la solicitud."
+          },
+          {
+            "a": "CM-012",
+            "de": "CM-008",
+            "mensaje": "Confirma versión y carga datos de la solicitud."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-008",
+            "mensaje": "Registra auditoría de acceso y decisión."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Envía la validación/aprobación con observaciones si aplica."
+          },
+          {
+            "a": "CM-005",
+            "de": "CT-002",
+            "mensaje": "Procesa la decisión y actualiza el estado final o intermedio."
+          },
+          {
+            "a": "CM-010",
+            "de": "CM-008",
+            "mensaje": "Dispara la notificación de cambio de estado al empleado."
+          }
+        ],
+        "titulo": "Validar y aprobar solicitud como Talento Humano",
+        "alternativa": [
+          {
+            "a": "CT-002",
+            "de": "CM-008",
+            "mensaje": "Rechaza por conflicto de concurrencia."
+          },
+          {
+            "a": "CT-001",
+            "de": "CT-002",
+            "mensaje": "Solicita recarga de la bandeja y muestra estado actual."
+          }
+        ],
+        "paso_desvio": 4,
+        "ids_historias": [
+          "HU-004"
+        ],
+        "condicion_alternativa": "La solicitud fue aprobada o rechazada mientras Talento Humano la evaluaba."
+      },
+      {
+        "id": "SQ-005",
+        "pasos": [
+          {
+            "a": "CT-001",
+            "de": "ACT-002",
+            "mensaje": "Accede a la administración del catálogo de tipos de ausencia."
+          },
+          {
+            "a": "CT-002",
+            "de": "CT-001",
+            "mensaje": "Solicita listar o modificar tipos de ausencia y su flujo."
+          },
+          {
+            "a": "CM-006",
+            "de": "CT-002",
+            "mensaje": "Deriva la operación al controlador de catálogo."
+          },
+          {
+            "a": "CM-009",
+            "de": "CM-006",
+            "mensaje": "Ejecuta crear, actualizar, eliminar o asignar flujo de aprobación."
+          },
+          {
+            "a": "CM-013",
+            "de": "CM-009",
+            "mensaje": "Persiste los cambios del catálogo y la configuración de flujo."
+          },
+          {
+            "a": "CM-011",
+            "de": "CM-009",
+            "mensaje": "Registra auditoría de la modificación del catálogo."
+          },
+          {
+            "a": "CT-001",
+            "de": "CM-006",
+            "mensaje": "Retorna el resultado de la operación."
+          }
+        ],
+        "titulo": "Administrar tipos de ausencia y flujo de aprobación",
+        "alternativa": [
+          {
+            "a": "CT-002",
+            "de": "CM-009",
+            "mensaje": "Rechaza la modificación y devuelve error de autorización o validación."
+          },
+          {
+            "a": "CT-001",
+            "de": "CT-002",
+            "mensaje": "Muestra el error al usuario administrativo."
+          }
+        ],
+        "paso_desvio": 4,
+        "ids_historias": [
+          "HU-005"
+        ],
+        "condicion_alternativa": "El cambio invalida una referencia activa o no cumple permisos de administración."
+      }
+    ],
+    "resumen": "Aplicación interna para gestionar solicitudes de vacaciones y permisos con portal web Angular, una API backend en FastAPI y PostgreSQL como base de datos relacional. El sistema incluye flujo de aprobación por jefe inmediato y Talento Humano, catálogo administrable de tipos de ausencia, notificaciones por correo SMTP, auditoría completa y control de concurrencia con bloqueo optimista para evitar aprobaciones duplicadas o concurrentes.",
+    "preguntas": [],
+    "decisiones": [
+      {
+        "id": "ADR-001",
+        "titulo": "Adoptar monolito modular para el backend",
+        "contexto": "El alcance actual cubre solicitudes, aprobaciones, catálogo, notificaciones y auditoría. Se requiere rapidez de entrega, simplicidad operativa y posibilidad de crecer por módulos sin dividir en microservicios.",
+        "decision": "Implementar una única API en FastAPI organizada como monolito modular, con módulos internos separados por responsabilidad: solicitudes, aprobaciones, catálogo, notificaciones y auditoría.",
+        "ventajas": [
+          "Menor complejidad operativa y de despliegue",
+          "Transacciones simples dentro de una sola base de datos",
+          "Separación interna por módulos facilita evolución futura"
+        ],
+        "desventajas": [
+          "Escalado fino por dominio no está disponible",
+          "Un fallo del proceso afecta a todos los módulos",
+          "Requiere disciplina arquitectónica para evitar acoplamiento interno"
+        ],
+        "alternativas": [
+          "Microservicios por dominio",
+          "Monolito en capas tradicional"
+        ],
+        "ids_atributos": [
+          "AC-005",
+          "AC-003",
+          "AC-004"
+        ]
+      },
+      {
+        "id": "ADR-002",
+        "titulo": "Persistir en PostgreSQL relacional con transacciones y control optimista",
+        "contexto": "Las solicitudes tienen estados, historial, auditoría y reglas de aprobación secuenciales. Se necesita consistencia fuerte y soporte de consultas relacionales.",
+        "decision": "Usar PostgreSQL como única base de datos relacional con transacciones ACID, tablas normalizadas y columna de versión para bloqueo optimista en decisiones de aprobación.",
+        "ventajas": [
+          "Consistencia fuerte para aprobaciones y auditoría",
+          "Consultas relacionales naturales para historial, bandejas y catálogo",
+          "Soporte claro para control de concurrencia mediante versión"
+        ],
+        "desventajas": [
+          "Mayor modelado inicial de esquema",
+          "Menor flexibilidad que un documento para cambios no estructurados",
+          "Requiere cuidado en migraciones de esquema"
+        ],
+        "alternativas": [
+          "Base de datos NoSQL documental",
+          "Persistencia en archivos o almacenamiento local"
+        ],
+        "ids_atributos": [
+          "AC-002",
+          "AC-003",
+          "AC-005"
+        ]
+      },
+      {
+        "id": "ADR-003",
+        "titulo": "Enviar notificaciones por SMTP desde el backend",
+        "contexto": "El sistema debe avisar cambios de estado y pendientes de revisión. El entorno permitido incluye SMTP y no se exigen canales adicionales.",
+        "decision": "Integrar un servicio de notificaciones SMTP dentro del backend para enviar correos a empleado y aprobadores cuando cambie el estado o exista una solicitud pendiente.",
+        "ventajas": [
+          "Cumple el aviso oportuno con tecnología permitida",
+          "Implementación simple y adecuada para un entorno interno",
+          "No introduce dependencias adicionales"
+        ],
+        "desventajas": [
+          "Menor riqueza de canales frente a una plataforma de mensajería",
+          "Entrega dependiente de la infraestructura de correo",
+          "Requiere configuración y monitoreo de SMTP"
+        ],
+        "alternativas": [
+          "Integración con plataforma de mensajería externa",
+          "Solo notificación dentro de la aplicación sin correo"
+        ],
+        "ids_atributos": [
+          "AC-005",
+          "AC-003"
+        ]
+      }
+    ],
+    "relaciones": [
+      {
+        "origen": "ACT-003",
+        "destino": "CT-001",
+        "protocolo": "HTTPS",
+        "descripcion": "El empleado usa el portal para crear y consultar solicitudes."
+      },
+      {
+        "origen": "ACT-001",
+        "destino": "CT-001",
+        "protocolo": "HTTPS",
+        "descripcion": "El jefe inmediato usa el portal para revisar y decidir solicitudes."
+      },
+      {
+        "origen": "ACT-002",
+        "destino": "CT-001",
+        "protocolo": "HTTPS",
+        "descripcion": "Talento Humano usa el portal para validar y aprobar solicitudes."
+      },
+      {
+        "origen": "CT-001",
+        "destino": "CT-002",
+        "protocolo": "HTTPS/JSON",
+        "descripcion": "La UI invoca la API para operaciones de solicitudes, revisión, catálogo y consulta de historial."
+      },
+      {
+        "origen": "CT-002",
+        "destino": "CT-003",
+        "protocolo": "SQL/TCP",
+        "descripcion": "La API persiste y consulta datos transaccionales, catálogo y auditoría."
+      },
+      {
+        "origen": "CT-002",
+        "destino": "CT-004",
+        "protocolo": "SMTP",
+        "descripcion": "La API envía notificaciones por correo."
+      },
+      {
+        "origen": "CM-004",
+        "destino": "CM-007",
+        "protocolo": "llamada interna",
+        "descripcion": "El controlador delega la validación de solicitudes y creación."
+      },
+      {
+        "origen": "CM-005",
+        "destino": "CM-008",
+        "protocolo": "llamada interna",
+        "descripcion": "El controlador delega aprobación, rechazo y validación con control optimista."
+      },
+      {
+        "origen": "CM-006",
+        "destino": "CM-009",
+        "protocolo": "llamada interna",
+        "descripcion": "El controlador delega administración del catálogo."
+      },
+      {
+        "origen": "CM-007",
+        "destino": "CM-012",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio de solicitudes persiste y consulta solicitudes."
+      },
+      {
+        "origen": "CM-008",
+        "destino": "CM-012",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio de revisiones actualiza estados y guarda historial."
+      },
+      {
+        "origen": "CM-009",
+        "destino": "CM-013",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio de catálogo persiste tipos de ausencia y flujos."
+      },
+      {
+        "origen": "CM-008",
+        "destino": "CM-010",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio de revisiones solicita notificación de cambio de estado."
+      },
+      {
+        "origen": "CM-010",
+        "destino": "CM-015",
+        "protocolo": "SMTP",
+        "descripcion": "El servicio de notificaciones envía correos mediante SMTP."
+      },
+      {
+        "origen": "CM-007",
+        "destino": "CM-011",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio registra auditoría de creación y consultas sensibles."
+      },
+      {
+        "origen": "CM-008",
+        "destino": "CM-011",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio registra auditoría de decisiones y accesos."
+      },
+      {
+        "origen": "CM-009",
+        "destino": "CM-011",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio registra auditoría de modificaciones del catálogo."
+      },
+      {
+        "origen": "CM-011",
+        "destino": "CM-014",
+        "protocolo": "llamada interna",
+        "descripcion": "El servicio de auditoría persiste eventos de auditoría."
+      },
+      {
+        "origen": "CM-012",
+        "destino": "CM-016",
+        "protocolo": "SQL",
+        "descripcion": "El repositorio accede al esquema de solicitudes."
+      },
+      {
+        "origen": "CM-013",
+        "destino": "CM-017",
+        "protocolo": "SQL",
+        "descripcion": "El repositorio accede al esquema de catálogo y auditoría."
+      },
+      {
+        "origen": "CM-014",
+        "destino": "CM-017",
+        "protocolo": "SQL",
+        "descripcion": "El repositorio persiste eventos de auditoría."
+      }
+    ],
+    "componentes": [
+      {
+        "id": "CM-001",
+        "tipo": "modulo_ui",
+        "nombre": "Módulo UI de solicitudes",
+        "contenedor": "CT-001",
+        "operaciones": [
+          "Crear solicitud",
+          "Consultar estado",
+          "Consultar historial",
+          "Ver detalle de solicitud"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-002"
+        ],
+        "responsabilidad": "Pantallas de registro, consulta de estado e historial de solicitudes para el empleado."
+      },
+      {
+        "id": "CM-002",
+        "tipo": "modulo_ui",
+        "nombre": "Módulo UI de revisión",
+        "contenedor": "CT-001",
+        "operaciones": [
+          "Listar pendientes",
+          "Aprobar solicitud",
+          "Rechazar solicitud",
+          "Registrar observación"
+        ],
+        "ids_historias": [
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Pantallas de bandeja de revisión y validación para jefe inmediato y Talento Humano."
+      },
+      {
+        "id": "CM-003",
+        "tipo": "modulo_ui",
+        "nombre": "Módulo UI de catálogo",
+        "contenedor": "CT-001",
+        "operaciones": [
+          "Listar tipos de ausencia",
+          "Crear tipo de ausencia",
+          "Editar tipo de ausencia",
+          "Asignar flujo de aprobación",
+          "Eliminar tipo de ausencia"
+        ],
+        "ids_historias": [
+          "HU-005"
+        ],
+        "responsabilidad": "Pantallas de administración de tipos de ausencia y su flujo de aprobación."
+      },
+      {
+        "id": "CM-004",
+        "tipo": "controlador",
+        "nombre": "Controlador de solicitudes",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "POST /solicitudes",
+          "GET /solicitudes/{id}",
+          "GET /solicitudes?estado&solicitante",
+          "GET /solicitudes/{id}/historial",
+          "PUT /solicitudes/{id}",
+          "DELETE /solicitudes/{id}"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-002"
+        ],
+        "responsabilidad": "Endpoints CRUD y consulta para solicitudes de vacaciones o permisos."
+      },
+      {
+        "id": "CM-005",
+        "tipo": "controlador",
+        "nombre": "Controlador de revisiones",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "GET /revisiones/pendientes",
+          "POST /solicitudes/{id}/aprobar",
+          "POST /solicitudes/{id}/rechazar",
+          "POST /solicitudes/{id}/validar",
+          "GET /revisiones/mi-bandeja"
+        ],
+        "ids_historias": [
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Endpoints para bandeja, aprobación, rechazo y validación con control optimista."
+      },
+      {
+        "id": "CM-006",
+        "tipo": "controlador",
+        "nombre": "Controlador de catálogo",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "GET /tipos-ausencia",
+          "POST /tipos-ausencia",
+          "PUT /tipos-ausencia/{id}",
+          "DELETE /tipos-ausencia/{id}",
+          "PUT /tipos-ausencia/{id}/flujo"
+        ],
+        "ids_historias": [
+          "HU-005"
+        ],
+        "responsabilidad": "Endpoints CRUD para tipos de ausencia y configuración de flujo."
+      },
+      {
+        "id": "CM-007",
+        "tipo": "servicio",
+        "nombre": "Servicio de solicitudes",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Validar campos obligatorios",
+          "Validar motivo/observación por tipo",
+          "Crear solicitud",
+          "Consultar detalle"
+        ],
+        "ids_historias": [
+          "HU-001"
+        ],
+        "responsabilidad": "Valida obligatoriedad del motivo/observación según el tipo de ausencia, crea solicitudes y construye su historial inicial."
+      },
+      {
+        "id": "CM-008",
+        "tipo": "servicio",
+        "nombre": "Servicio de revisiones",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Verificar versión",
+          "Registrar decisión",
+          "Cambiar estado",
+          "Guardar observación",
+          "Generar notificación"
+        ],
+        "ids_historias": [
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Ejecuta aprobación/rechazo/validación, aplica control optimista y emite eventos de estado."
+      },
+      {
+        "id": "CM-009",
+        "tipo": "servicio",
+        "nombre": "Servicio de catálogo",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Crear tipo de ausencia",
+          "Actualizar tipo de ausencia",
+          "Asignar flujo",
+          "Consultar catálogo"
+        ],
+        "ids_historias": [
+          "HU-005"
+        ],
+        "responsabilidad": "Administra tipos de ausencia y la asociación del flujo de aprobación."
+      },
+      {
+        "id": "CM-010",
+        "tipo": "servicio",
+        "nombre": "Servicio de notificaciones",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Crear notificación",
+          "Enviar correo",
+          "Registrar resultado de envío"
+        ],
+        "ids_historias": [
+          "HU-002"
+        ],
+        "responsabilidad": "Genera y envía avisos por correo ante cambios de estado y pendientes de revisión."
+      },
+      {
+        "id": "CM-011",
+        "tipo": "servicio",
+        "nombre": "Servicio de auditoría",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Registrar acceso",
+          "Registrar consulta sensible",
+          "Registrar modificación",
+          "Registrar decisión"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "responsabilidad": "Registra accesos, consultas a historial, modificaciones del catálogo y decisiones de solicitud."
+      },
+      {
+        "id": "CM-012",
+        "tipo": "repositorio",
+        "nombre": "Repositorio de solicitudes",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Insertar solicitud",
+          "Actualizar solicitud",
+          "Consultar solicitud",
+          "Listar pendientes",
+          "Guardar historial"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Acceso a tablas de solicitudes, estados, observaciones e historial."
+      },
+      {
+        "id": "CM-013",
+        "tipo": "repositorio",
+        "nombre": "Repositorio de catálogo",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Insertar tipo de ausencia",
+          "Actualizar tipo de ausencia",
+          "Eliminar tipo de ausencia",
+          "Consultar tipos de ausencia",
+          "Guardar flujo"
+        ],
+        "ids_historias": [
+          "HU-005"
+        ],
+        "responsabilidad": "Acceso a tablas de tipos de ausencia y configuración de flujo."
+      },
+      {
+        "id": "CM-014",
+        "tipo": "repositorio",
+        "nombre": "Repositorio de auditoría",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Insertar evento de auditoría",
+          "Consultar eventos de auditoría"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-003",
+          "HU-004",
+          "HU-005"
+        ],
+        "responsabilidad": "Persistencia de eventos de auditoría de accesos, consultas y cambios."
+      },
+      {
+        "id": "CM-015",
+        "tipo": "integracion",
+        "nombre": "Integración SMTP",
+        "contenedor": "CT-002",
+        "operaciones": [
+          "Enviar correo de cambio de estado",
+          "Enviar correo de pendiente"
+        ],
+        "ids_historias": [
+          "HU-002"
+        ],
+        "responsabilidad": "Envía correos de aviso a empleados y aprobadores."
+      },
+      {
+        "id": "CM-016",
+        "tipo": "esquema_datos",
+        "nombre": "Esquema de datos de solicitudes",
+        "contenedor": "CT-003",
+        "operaciones": [
+          "Persistir solicitudes",
+          "Persistir historial",
+          "Persistir decisiones",
+          "Persistir versión",
+          "Persistir notificaciones"
+        ],
+        "ids_historias": [
+          "HU-001",
+          "HU-002",
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Tablas solicitudes, historial_solicitud, aprobaciones, observaciones, versiones y notificaciones."
+      },
+      {
+        "id": "CM-017",
+        "tipo": "esquema_datos",
+        "nombre": "Esquema de datos de catálogo y auditoría",
+        "contenedor": "CT-003",
+        "operaciones": [
+          "Persistir catálogo",
+          "Persistir flujo",
+          "Persistir auditoría"
+        ],
+        "ids_historias": [
+          "HU-005",
+          "HU-001",
+          "HU-003",
+          "HU-004"
+        ],
+        "responsabilidad": "Tablas tipos_ausencia, flujo_aprobacion, auditoria_acceso y auditoria_modificacion."
+      }
+    ],
+    "contenedores": [
+      {
+        "id": "CT-001",
+        "tipo": "aplicacion_web",
+        "nombre": "Portal interno de solicitudes",
+        "tecnologia": "Angular + Nginx",
+        "responsabilidad": "Interfaz web para que empleados, jefes inmediatos y Talento Humano gestionen solicitudes, bandejas, notificaciones y catálogo."
+      },
+      {
+        "id": "CT-002",
+        "tipo": "api",
+        "nombre": "API de gestión de ausencias",
+        "tecnologia": "Python + FastAPI",
+        "responsabilidad": "Expone endpoints para solicitudes, aprobación, validación, catálogo, notificaciones, auditoría y control de concurrencia."
+      },
+      {
+        "id": "CT-003",
+        "tipo": "base_datos",
+        "nombre": "Base de datos de ausencias",
+        "tecnologia": "PostgreSQL",
+        "responsabilidad": "Persiste solicitudes, tipos de ausencia, estados, historial, observaciones, auditoría, notificaciones y versiones para concurrencia."
+      },
+      {
+        "id": "CT-004",
+        "tipo": "servicio_externo",
+        "nombre": "Servidor SMTP corporativo",
+        "tecnologia": "SMTP",
+        "responsabilidad": "Envía correos de notificación sobre cambios de estado y pendientes de revisión."
+      }
+    ],
+    "atributos_calidad": [
+      {
+        "id": "AC-001",
+        "medida": "0 accesos no autorizados en pruebas de autorización; 100% de consultas a historial y acciones sensibles auditadas con usuario, fecha y operación.",
+        "atributo": "seguridad",
+        "escenario": "Cuando un usuario consulta el historial de una solicitud o ejecuta una aprobación, el sistema verifica permisos y registra la identidad del actor, de modo que solo usuarios autorizados accedan a información sensible.",
+        "prioridad": "alta",
+        "ids_requisitos": [
+          "RF-008",
+          "RF-013",
+          "RF-009",
+          "RF-010",
+          "RF-011"
+        ]
+      },
+      {
+        "id": "AC-002",
+        "medida": "100% de conflictos concurrentes detectados mediante control optimista; ninguna solicitud termina con dos decisiones válidas para la misma revisión.",
+        "atributo": "confiabilidad",
+        "escenario": "Cuando dos aprobadores intentan decidir simultáneamente sobre la misma solicitud, el sistema rechaza la segunda operación si la versión ya cambió y evita doble aprobación.",
+        "prioridad": "alta",
+        "ids_requisitos": [
+          "RF-010",
+          "RF-011"
+        ]
+      },
+      {
+        "id": "AC-003",
+        "medida": "100% de operaciones de creación, actualización, aprobación, rechazo, consulta de historial y administración del catálogo con evento de auditoría persistido.",
+        "atributo": "trazabilidad",
+        "escenario": "Cuando se crea, aprueba, rechaza o modifica una solicitud o el catálogo, el sistema registra quién hizo el cambio, qué cambió y cuándo, incluyendo la consulta del historial por parte del solicitante.",
+        "prioridad": "alta",
+        "ids_requisitos": [
+          "RF-013",
+          "RF-007",
+          "RF-008",
+          "RF-010",
+          "RF-011",
+          "RF-012"
+        ]
+      },
+      {
+        "id": "AC-004",
+        "medida": "La validación se encuentra centralizada en el servicio backend y cubre 100% de los tipos configurados; el rechazo ocurre en API con respuesta explícita de validación.",
+        "atributo": "mantenibilidad",
+        "escenario": "Cuando se cambie la regla de obligatoriedad del motivo/observación por tipo de ausencia, la validación debe mantenerse en el backend para asegurar el rechazo de solicitudes inválidas aunque no pasen por la UI.",
+        "prioridad": "alta",
+        "ids_requisitos": [
+          "RF-002"
+        ]
+      },
+      {
+        "id": "AC-005",
+        "medida": "Servicio disponible para operación interna con reinicio sin pérdida de datos; persistencia transaccional en PostgreSQL y despliegue containerizado.",
+        "atributo": "disponibilidad",
+        "escenario": "Cuando un empleado o aprobador usa el portal durante la jornada laboral, el sistema debe seguir operativo para registrar solicitudes, revisar bandejas y enviar notificaciones.",
+        "prioridad": "media",
+        "ids_requisitos": [
+          "RF-001",
+          "RF-003",
+          "RF-005",
+          "RF-006",
+          "RF-009"
+        ]
+      },
+      {
+        "id": "AC-006",
+        "medida": "Campos obligatorios visibles y validación inmediata en UI; reducción de intentos inválidos capturados en frontend, con rechazo equivalente en backend.",
+        "atributo": "usabilidad",
+        "escenario": "Cuando el empleado registra una solicitud, el sistema presenta un formulario guiado para tipo de ausencia, fechas, horas y motivo/observación si aplica, reduciendo errores de captura.",
+        "prioridad": "media",
+        "ids_requisitos": [
+          "RF-003",
+          "RF-004",
+          "RF-002"
+        ]
+      }
+    ]
+  },
+  "validacion": {
+    "observaciones": [
+      {
+        "agente": "arquitecto_software",
+        "codigo": "ARQ-001",
+        "severidad": "advertencia",
+        "descripcion": "La API expone en CM-004 operaciones de actualización y eliminación de solicitudes (PUT/DELETE /solicitudes/{id}) y en CM-006 eliminación de tipos de ausencia, pero no se explicita la protección de negocio para impedir borrados que rompan trazabilidad, solicitudes ya aprobadas o catálogos referenciados. Falta dejar claro en el backend qué estados/relaciones bloquean esas operaciones.",
+        "ids_elementos": [
+          "CM-004",
+          "CM-006",
+          "CM-007",
+          "CM-009",
+          "CM-012",
+          "CM-013"
+        ]
+      },
+      {
+        "agente": "arquitecto_software",
+        "codigo": "ARQ-002",
+        "severidad": "advertencia",
+        "descripcion": "La notificación de pendientes de revisión (RF-006) está descrita como envío de correo, pero no se define el disparador ni la fuente de verdad para detectar 'solicitudes pendientes'. Conviene precisar si se emite al crear la solicitud, al reasignar bandeja o por proceso programado, para evitar implementaciones inconsistentes.",
+        "ids_elementos": [
+          "CM-010",
+          "CM-015",
+          "SQ-002"
+        ]
+      },
+      {
+        "agente": "arquitecto_software",
+        "codigo": "ARQ-003",
+        "severidad": "advertencia",
+        "descripcion": "El requisito RF-003 menciona creación de solicitudes mediante portal interno o formato oficial, pero el diseño solo implementa el portal web. Si el formato oficial implica carga/importación o registro alterno, falta un componente o flujo backend que lo soporte; si no aplica, debe quedar restringido explícitamente en la implementación.",
+        "ids_elementos": [
+          "RF-003",
+          "CM-001",
+          "CM-004",
+          "SQ-001"
+        ]
+      },
+      {
+        "agente": "arquitecto_infraestructura",
+        "codigo": "ARQ-004",
+        "severidad": "advertencia",
+        "descripcion": "En nube se declara EKS, ALB, RDS, ECR, Secrets Manager y CloudWatch, pero no se modelan explícitamente componentes de soporte para alta disponibilidad de la base de datos ni estrategia de respaldo/recuperación. Dado el atributo de disponibilidad, debería contemplarse para evitar pérdida de servicio o datos ante fallos.",
+        "ids_elementos": [
+          "IN-007",
+          "IN-011",
+          "AC-005"
+        ]
+      },
+      {
+        "agente": "arquitecto_infraestructura",
+        "codigo": "ARQ-005",
+        "severidad": "advertencia",
+        "descripcion": "La configuración de secretos incluye DATABASE_URL y credenciales SMTP en Secrets Manager, pero también aparecen parámetros sensibles en contenedores locales y nube. Conviene detallar que en despliegue productivo la URL de base de datos y credenciales se resuelven desde secretos/variables inyectadas, no embebidas en imágenes ni manifests, para mantener coherencia con la política de seguridad.",
+        "ids_elementos": [
+          "IN-002",
+          "IN-006",
+          "IN-009",
+          "IN-012"
+        ]
+      },
+      {
+        "agente": "planificador",
+        "codigo": "ARQ-006",
+        "severidad": "advertencia",
+        "descripcion": "El diseño cubre local con Docker Compose y nube en AWS, pero no explicita el mismo contrato de configuración entre ambos entornos para facilitar ejecución reproducible (por ejemplo, equivalencia de variables, healthchecks y dependencias de arranque). Esto puede complicar el paso de local a nube aunque no impide la implementación.",
+        "ids_elementos": [
+          "IN-001",
+          "IN-002",
+          "IN-003",
+          "IN-005",
+          "IN-006",
+          "IN-007"
+        ]
+      }
+    ],
+    "puede_publicar": true,
+    "agentes_con_errores": []
+  },
+  "id_proyecto": "39e8f9c0-bf27-458e-b248-47725f28f211",
+  "id_ejecucion": "e6dc7526-af7a-401c-95d1-3af11c2f0c0c",
+  "instrucciones": "Modela control de concurrencia/bloqueo optimista para las aprobaciones de solicitudes (evitar doble aprobación o decisiones concurrentes). Completa el ciclo de auditoría: registra todas las modificaciones del catálogo y las consultas a datos sensibles, incluyendo quién consulta el historial.\nDefine en el backend (API/servicio de solicitudes) la validación de obligatoriedad del campo motivo/observación según el tipo de ausencia definido en RF-002, no solo en el frontend, para que el servicio rechace solicitudes inválidas aunque no pasen por la UI.",
+  "infraestructura": {
+    "nodos": [
+      {
+        "id": "IN-001",
+        "tipo": "contenedor",
+        "aloja": [
+          "CT-001"
+        ],
+        "nombre": "Portal interno de solicitudes",
+        "puerto": 4200,
+        "entorno": "local",
+        "replicas": 1,
+        "tecnologia": "Angular + Nginx",
+        "explicacion": "Contenedor local de la interfaz web para que los usuarios consulten y gestionen solicitudes desde el navegador.",
+        "configuracion": [
+          "API_BASE_URL"
+        ]
+      },
+      {
+        "id": "IN-002",
+        "tipo": "contenedor",
+        "aloja": [
+          "CT-002"
+        ],
+        "nombre": "API de gestión de ausencias",
+        "puerto": 8000,
+        "entorno": "local",
+        "replicas": 1,
+        "tecnologia": "Python + FastAPI",
+        "explicacion": "Contenedor local del backend que expone los endpoints de negocio, valida reglas, registra auditoría y coordina aprobaciones.",
+        "configuracion": [
+          "DATABASE_URL",
+          "SMTP_HOST",
+          "SMTP_PORT",
+          "SMTP_USER",
+          "SMTP_PASSWORD",
+          "AUDIT_LOG_LEVEL"
+        ]
+      },
+      {
+        "id": "IN-003",
+        "tipo": "base_datos",
+        "aloja": [
+          "CT-003"
+        ],
+        "nombre": "Base de datos de ausencias",
+        "puerto": 5432,
+        "entorno": "local",
+        "replicas": 1,
+        "tecnologia": "PostgreSQL",
+        "explicacion": "Base de datos local para guardar solicitudes, catálogo, estados, historial, auditoría y control de concurrencia.",
+        "configuracion": [
+          "POSTGRES_DB",
+          "POSTGRES_USER",
+          "POSTGRES_PASSWORD"
+        ]
+      },
+      {
+        "id": "IN-004",
+        "tipo": "servicio_externo",
+        "aloja": [],
+        "nombre": "Servidor SMTP corporativo",
+        "puerto": 25,
+        "entorno": "local",
+        "replicas": 1,
+        "tecnologia": "SMTP",
+        "explicacion": "Servicio de correo externo usado por la API para enviar notificaciones de cambios de estado y pendientes.",
+        "configuracion": [
+          "SMTP_HOST",
+          "SMTP_PORT"
+        ]
+      },
+      {
+        "id": "IN-005",
+        "tipo": "contenedor",
+        "aloja": [
+          "CT-001"
+        ],
+        "nombre": "Portal interno de solicitudes",
+        "puerto": 80,
+        "entorno": "nube",
+        "replicas": 2,
+        "tecnologia": "Angular + Nginx",
+        "explicacion": "Deployment en EKS para servir la interfaz web con al menos dos réplicas y facilitar disponibilidad.",
+        "configuracion": [
+          "API_BASE_URL"
+        ]
+      },
+      {
+        "id": "IN-006",
+        "tipo": "contenedor",
+        "aloja": [
+          "CT-002"
+        ],
+        "nombre": "API de gestión de ausencias",
+        "puerto": 8000,
+        "entorno": "nube",
+        "replicas": 2,
+        "tecnologia": "Python + FastAPI",
+        "explicacion": "Deployment en EKS del backend; maneja validaciones, auditoría, concurrencia optimista y lógica de negocio.",
+        "configuracion": [
+          "DATABASE_URL",
+          "SMTP_HOST",
+          "SMTP_PORT",
+          "SMTP_USER",
+          "SMTP_PASSWORD",
+          "AUDIT_LOG_LEVEL"
+        ]
+      },
+      {
+        "id": "IN-007",
+        "tipo": "base_datos",
+        "aloja": [
+          "CT-003"
+        ],
+        "nombre": "Base de datos de ausencias",
+        "puerto": 5432,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "AWS RDS PostgreSQL",
+        "explicacion": "Base de datos administrada en AWS para persistencia confiable y recuperación ante fallos.",
+        "configuracion": [
+          "POSTGRES_DB",
+          "POSTGRES_USER",
+          "POSTGRES_PASSWORD"
+        ]
+      },
+      {
+        "id": "IN-008",
+        "tipo": "balanceador",
+        "aloja": [
+          "CT-001",
+          "CT-002"
+        ],
+        "nombre": "AWS ALB",
+        "puerto": 80,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "AWS ALB",
+        "explicacion": "Balanceador de entrada que publica la aplicación en Kubernetes y enruta tráfico hacia la UI o la API.",
+        "configuracion": [
+          "INGRESS_HOST"
+        ]
+      },
+      {
+        "id": "IN-009",
+        "tipo": "secreto",
+        "aloja": [
+          "CT-002",
+          "CT-003"
+        ],
+        "nombre": "AWS Secrets Manager",
+        "puerto": null,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "AWS Secrets Manager",
+        "explicacion": "Almacén seguro de secretos y credenciales usado por los pods y la base de datos administrada.",
+        "configuracion": [
+          "DATABASE_URL",
+          "SMTP_PASSWORD",
+          "POSTGRES_PASSWORD"
+        ]
+      },
+      {
+        "id": "IN-010",
+        "tipo": "registro_imagenes",
+        "aloja": [
+          "CT-001",
+          "CT-002"
+        ],
+        "nombre": "AWS ECR",
+        "puerto": null,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "AWS ECR",
+        "explicacion": "Registro de imágenes donde se publican las versiones de la UI y la API para el despliegue en EKS.",
+        "configuracion": [
+          "IMAGE_TAG"
+        ]
+      },
+      {
+        "id": "IN-011",
+        "tipo": "monitoreo",
+        "aloja": [
+          "CT-001",
+          "CT-002",
+          "CT-003"
+        ],
+        "nombre": "AWS CloudWatch",
+        "puerto": null,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "AWS CloudWatch",
+        "explicacion": "Servicio de observabilidad para logs, métricas y alertas del entorno nube.",
+        "configuracion": [
+          "LOG_GROUP_NAME",
+          "METRIC_NAMESPACE"
+        ]
+      },
+      {
+        "id": "IN-012",
+        "tipo": "servicio_externo",
+        "aloja": [],
+        "nombre": "Servidor SMTP corporativo",
+        "puerto": 25,
+        "entorno": "nube",
+        "replicas": 1,
+        "tecnologia": "SMTP",
+        "explicacion": "Servicio de correo externo consumido desde la API para notificaciones por email.",
+        "configuracion": [
+          "SMTP_HOST",
+          "SMTP_PORT"
+        ]
+      }
+    ],
+    "resumen": "Arquitectura en dos entornos: local con Docker Compose para desarrollo y pruebas, y nube en AWS EKS para ejecución productiva. La aplicación se compone de una UI web, una API backend y PostgreSQL. En nube se añaden ALB como ingreso, RDS para datos, ECR para imágenes, Secrets Manager para secretos y CloudWatch para monitoreo. El diseño contempla auditoría completa, validación centralizada en backend y control optimista para evitar aprobaciones concurrentes duplicadas.",
+    "seguridad": "En local y en nube, los contenedores no deben contener secretos embebidos; las variables sensibles se inyectan desde archivos de entorno locales o Secrets Manager en AWS. La API valida permisos, obligatoriedad de campos y reglas de negocio, incluyendo el motivo/observación según el tipo de ausencia. Las aprobaciones usan control optimista con versión o marca de concurrencia para impedir doble decisión. Toda consulta a historial y toda modificación de catálogo debe registrar auditoría con identidad del usuario, fecha, operación y entidad afectada. El SMTP corporativo se consume como servicio externo sin almacenar credenciales en texto claro.",
+    "conexiones": [
+      {
+        "origen": "IN-001",
+        "destino": "IN-002",
+        "protocolo": "HTTPS/JSON",
+        "descripcion": "La UI local consume la API local para solicitudes, revisión, catálogo e historial."
+      },
+      {
+        "origen": "IN-002",
+        "destino": "IN-003",
+        "protocolo": "SQL/TCP",
+        "descripcion": "La API local persiste y consulta datos transaccionales, catálogo y auditoría."
+      },
+      {
+        "origen": "IN-002",
+        "destino": "IN-004",
+        "protocolo": "SMTP",
+        "descripcion": "La API local envía notificaciones por correo al servidor SMTP corporativo."
+      },
+      {
+        "origen": "IN-005",
+        "destino": "IN-008",
+        "protocolo": "HTTP",
+        "descripcion": "La UI en nube entra por el ALB para servir el frontend."
+      },
+      {
+        "origen": "IN-008",
+        "destino": "IN-005",
+        "protocolo": "HTTP",
+        "descripcion": "El ALB enruta solicitudes web hacia el Deployment de la UI."
+      },
+      {
+        "origen": "IN-008",
+        "destino": "IN-006",
+        "protocolo": "HTTP/HTTPS",
+        "descripcion": "El ALB enruta llamadas API hacia el Deployment del backend."
+      },
+      {
+        "origen": "IN-006",
+        "destino": "IN-007",
+        "protocolo": "SQL/TCP",
+        "descripcion": "La API en nube consulta y persiste datos en la base administrada."
+      },
+      {
+        "origen": "IN-006",
+        "destino": "IN-009",
+        "protocolo": "API/HTTPS",
+        "descripcion": "La API obtiene credenciales y parámetros sensibles desde Secrets Manager."
+      },
+      {
+        "origen": "IN-006",
+        "destino": "IN-010",
+        "protocolo": "OCI/HTTPS",
+        "descripcion": "La canalización publica y recupera imágenes de contenedor para despliegue."
+      },
+      {
+        "origen": "IN-006",
+        "destino": "IN-011",
+        "protocolo": "HTTPS",
+        "descripcion": "La API envía logs y métricas a CloudWatch para observabilidad."
+      },
+      {
+        "origen": "IN-006",
+        "destino": "IN-012",
+        "protocolo": "SMTP",
+        "descripcion": "La API envía notificaciones por correo al servidor SMTP corporativo externo."
+      }
+    ],
+    "observabilidad": "AWS CloudWatch centraliza logs y métricas del entorno nube. La API debe emitir logs estructurados de validación, auditoría, aprobaciones, rechazos por concurrencia y consultas sensibles. En local, los logs de Docker Compose se revisan por contenedor. Se recomienda exponer métricas básicas de salud de API y base de datos, además de trazas de errores de negocio y de persistencia.",
+    "estrategia_despliegue": "Entorno local: Docker Compose levanta CT-001, CT-002 y CT-003 en una sola red interna, con PostgreSQL como servicio persistente para el desarrollador. Entorno nube: la UI y la API se despliegan como Deployments en AWS EKS con réplicas para disponibilidad; el acceso externo entra por AWS ALB; la base de datos se externaliza a AWS RDS PostgreSQL; las credenciales y parámetros sensibles se obtienen desde AWS Secrets Manager; las imágenes se publican en AWS ECR; y la telemetría y logs se envían a AWS CloudWatch. Todo contenedor propio está presente en ambos entornos. Los sistemas externos se modelan como servicio_externo y no se ejecutan dentro del clúster."
+  },
+  "nombre_proyecto": "Solicitud y aprobación de vacaciones y permisos.",
+  "version_esquema": "4.0",
+  "version_arquitectura": 4,
+  "tecnologias_permitidas": [
+    "Angular",
+    "Nginx",
+    "Python",
+    "FastAPI",
+    "PostgreSQL",
+    "Docker",
+    "Docker Compose",
+    "Kubernetes",
+    "AWS EKS",
+    "AWS ECR",
+    "AWS RDS PostgreSQL",
+    "AWS ALB",
+    "AWS Secrets Manager",
+    "AWS CloudWatch",
+    "SMTP"
+  ],
+  "version_backlog_origen": 1,
+  "version_mockups_origen": 1,
+  "correcciones_automaticas": 0,
+  "version_linea_base_origen": 9
+}

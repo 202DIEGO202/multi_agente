@@ -6,7 +6,6 @@ from psycopg.types.json import Jsonb
 
 from app.models.mockups import Design, DesignReview
 from app.models.schemas import normalized
-from app.services.workflow_policy import automatic_approval_allowed
 
 
 def normalize_design_references(design, backlog):
@@ -371,19 +370,6 @@ class MockupService:
                 "INSERT INTO events(execution_id,component,operation,status,description,data) VALUES(%s,'mockups','guardar_revision','completado','Revisión de mockups guardada',%s)",
                 (run_id, Jsonb(content)),
             )
-            if automatic_approval_allowed(
-                project["mode"], content["validacion"]["puede_publicar"]
-            ):
-                note = "Validado automáticamente: cobertura, estructura, referencias y contraste sin bloqueos ni preguntas."
-                await conn.execute(
-                    "INSERT INTO mockup_decisions(project_id,version,status,note) VALUES(%s,%s,'validado_automaticamente',%s)",
-                    (pid, content["version_mockup"], note),
-                )
-                await conn.execute(
-                    "INSERT INTO events(execution_id,component,operation,status,description,data) "
-                    "VALUES(%s,'mockups','decision_automatica','validado_automaticamente',%s,%s)",
-                    (run_id, note, Jsonb({"version": content["version_mockup"], "validacion": content["validacion"]})),
-                )
         return content
 
     async def list(self, pid):

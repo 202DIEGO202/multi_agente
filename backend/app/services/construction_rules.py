@@ -431,11 +431,46 @@ def assess(files, ctx):
                 f"{screen['id']} · {screen['titulo']}: faltan campos o textos del mockup (cobertura {cov:.0%})",
             )
         if screen["app"] == "panel" and coverage(screen["labels"], portal_text) >= LEAK_MIN:
-            add(
-                OWNER_BY_APP["portal"],
-                "PANTALLA_ADMIN_EN_EMPLEADO",
-                f"{screen['id']} · {screen['titulo']} es una pantalla de aprobadores y aparece en la aplicación del empleado",
+            # Sin esto, "corregir" no sabía en qué archivo del portal buscar y repetía el
+            # mismo hallazgo ronda tras ronda. Se busca, entre los archivos del portal, cuál
+            # por sí solo ya cubre las etiquetas de la pantalla del panel (el candidato más
+            # probable a contener la fuga), para dirigir la corrección a ese archivo.
+            portal_files = {
+                path: content
+                for path, content in files.items()
+                if path.startswith("portal/src/app/")
+            }
+            culprit = max(
+                (
+                    path
+                    for path, content in portal_files.items()
+                    if coverage(screen["labels"], content) >= LEAK_MIN
+                ),
+                key=lambda path: coverage(screen["labels"], portal_files[path]),
+                default="",
             )
+            # Un formulario del portal a veces necesita leer el mismo catálogo que administra o
+            # decide el panel (p. ej. tipos de ausencia para un selector, o el estado de una
+            # solicitud propia), y eso solapa casi todo el texto de la pantalla admin sin que haya
+            # una fuga real: no hay acciones de gestión ni de decisión, solo una consulta de solo
+            # lectura para alimentar el propio flujo del empleado. Si el único archivo señalado no
+            # contiene ningún verbo de gestión o decisión propio de un panel de aprobadores, no se
+            # reporta como fuga. Con el solapamiento repartido entre varios archivos, o con alguno
+            # de esos verbos presente, se mantiene el criterio estricto anterior (deliberadamente
+            # amplio: ante la duda, se prefiere un falso positivo revisable a ocultar una fuga).
+            MANAGEMENT_VERBS = re.compile(
+                r"(?i)\b(crear|edita[r]?|elimina[r]?|guarda[r]?|activa[r]?|desactiva[r]?|"
+                r"administra[r]?|gestiona[r]?|nuevo tipo|modifica[r]?|aprueb[ao]|aproba[r]?|"
+                r"rechaz[ao]|rechaza[r]?|valid[ao]|valida[r]?|revis[ao]|revisa[r]?|decid[ae]|decidi[r]?)\b"
+            )
+            looks_like_leak = bool(culprit) and MANAGEMENT_VERBS.search(portal_files[culprit])
+            if not culprit or looks_like_leak:
+                add(
+                    OWNER_BY_APP["portal"],
+                    "PANTALLA_ADMIN_EN_EMPLEADO",
+                    f"{screen['id']} · {screen['titulo']} es una pantalla de aprobadores y aparece en la aplicación del empleado",
+                    culprit,
+                )
 
     tests_text = norm(" ".join(tests.values()))
     untested = [c for c in ctx["criteria"] if norm(c) not in tests_text]

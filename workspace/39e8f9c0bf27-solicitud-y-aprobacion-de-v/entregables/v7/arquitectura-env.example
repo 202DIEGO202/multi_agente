@@ -1,0 +1,11 @@
+# Valores locales de ejemplo. No suba este archivo con secretos reales.
+POSTGRES_DB=app
+POSTGRES_USER=app
+POSTGRES_PASSWORD=cambie-esto
+API_BASE_URL=
+DATABASE_URL=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+AUDIT_LOG_LEVEL=

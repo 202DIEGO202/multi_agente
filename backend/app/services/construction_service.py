@@ -14,7 +14,6 @@ from app.services.diagrams import build_views
 from app.services.diagrams import files as architecture_files
 from app.services.instance import InstanceDeployer
 from app.services.scaffold import STACK, project_key, readme_app, scaffold_files, slug
-from app.services.workflow_policy import automatic_approval_allowed
 
 __all__ = ["ConstructionService", "build_context", "project_key", "scaffold_files"]
 
@@ -389,24 +388,6 @@ class ConstructionService:
                 "VALUES(%s,'construccion','guardar_revision','completado','Construcción versionada guardada',%s)",
                 (run_id, Jsonb({"version_construccion": version, "consumo": content["consumo"]})),
             )
-            if automatic_approval_allowed(
-                project["mode"],
-                content["validacion"]["puede_publicar"],
-                complete=content["validacion"].get("revision_semantica", False),
-                runtime_verified=content["validacion"].get("runtime_verificado", False),
-                observations=content["validacion"].get("observaciones", []),
-            ):
-                note = "Validado automáticamente: revisión funcional y pruebas de ejecución completadas sin bloqueos. El despliegue requiere acción explícita."
-                await conn.execute(
-                    "INSERT INTO construction_decisions(project_id,version,status,note) VALUES(%s,%s,'validado_automaticamente',%s)",
-                    (pid, version, note),
-                )
-                await conn.execute(
-                    "INSERT INTO events(execution_id,component,operation,status,description,data) "
-                    "VALUES(%s,'construccion','decision_automatica','validado_automaticamente',%s,%s)",
-                    (run_id, note, Jsonb({"version": version, "validacion": content["validacion"]})),
-                )
-                auto_approved = True
         await asyncio.to_thread(self.write_entregables, content, arch["payload"])
         ok = content["validacion"]["puede_publicar"]
         await self.notify(

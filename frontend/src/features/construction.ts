@@ -17,11 +17,11 @@ const TABS=[{id:'resumen',label:'Producto'},{id:'archivos',label:'Archivos'},{id
 @if(sources().length){
 <label>Arquitectura aprobada<select [(ngModel)]="sourceVersion">@for(s of sources();track s.version){<option [ngValue]="s.version">Arquitectura v{{s.version}} · backlog v{{s.version_backlog}}</option>}</select></label>
 <label>Indicaciones (opcional)<textarea [(ngModel)]="instructions" rows="2" maxlength="4000" placeholder="Por ejemplo: usar una paleta azul corporativa; incluir datos semilla de tres áreas."></textarea></label>
-<p class="muted tiny">Los agentes escriben el código en paralelo donde es posible; el andamiaje, el balanceador y las reglas no usan modelo. Cada ciclo se verifica con Docker real y se corrige solo el agente responsable (máximo dos correcciones).</p>
+<p class="muted tiny">Los agentes escriben el código en paralelo donde es posible; el andamiaje, el balanceador y las reglas no usan modelo. Cada ciclo se verifica con Docker real y se corrige solo el agente responsable (máximo tres correcciones).</p>
 <button class="button primary" [disabled]="busy()||!sourceVersion" (click)="generate()">{{busy()?'Construyendo y verificando…':'Construir producto'}}</button>
 }@else{<p class="muted">Primero aprueba y publica una arquitectura en la fase 4.</p>}
 @if(runId()){<ol class="agent-progress">@for(step of steps();track step.agent){<li [class.done]="step.state==='completado'" [class.failed]="step.state==='error'"><strong>{{step.label}}</strong> <span class="muted tiny">{{step.text}}</span></li>}</ol>
-<p><a [routerLink]="['/activity']" [queryParams]="{run:runId()}">Ver ejecución y contratos entre agentes</a></p><p aria-live="polite" class="muted">{{progress()}}</p>}
+<p><a [routerLink]="['/activity']" [queryParams]="{run:runId()}">Ver ejecución y contratos entre agentes</a></p><p aria-live="polite" [class.validation-error]="progressFailed()" [class.muted]="!progressFailed()">{{progress()}}</p>}
 </section>
 
 <div class="section-heading"><h2>Productos y versiones <span class="count-label">{{versions().length}}</span></h2><select aria-label="Versión de construcción" [ngModel]="selectedVersion()" (ngModelChange)="loadVersion(+$event)"><option [ngValue]="0">Selecciona una versión</option>@for(r of versions();track r.version){<option [ngValue]="r.version">v{{r.version}} · arquitectura v{{r.version_arquitectura}} · {{r.decision==='validado_automaticamente'?'Validada automáticamente':r.decision==='aprobado_por_humano'?'Aprobada':r.decision==='descartado'?'Rechazada':'Pendiente'}}</option>}</select></div>
@@ -51,8 +51,8 @@ const TABS=[{id:'resumen',label:'Producto'},{id:'archivos',label:'Archivos'},{id
 @for(p of envelope()?.entorno?.resultado?.pasos||[];track $index){<details><summary>{{p.paso}} · {{p.ok?'correcto':'falló'}}</summary><pre>{{p.detalle}}</pre></details>}
 </div></div>}
 @case('validacion'){<h3>Validación de artefactos</h3><p class="muted tiny">Reglas sin modelo: sintaxis Python y TypeScript, YAML, docker compose config, dependencias permitidas, rutas por agente y secretos. Después, revisión semántica.</p>
-@for(f of c.validacion.observaciones;track $index){<p [class.validation-error]="f.severidad==='error'"><strong>{{f.severidad==='error'?'Bloqueo':'Advertencia'}} · {{agent(f.agente)}}:</strong> {{f.descripcion}} @if(f.archivo){<code>{{f.archivo}}</code>}</p>}@empty{<p class="muted">Sin observaciones.</p>}
-<p class="tiny muted">Correcciones automáticas: {{c.correcciones_automaticas}} / 1</p>
+@for(f of c.validacion.observaciones;track $index){<p [class.validation-error]="f.severidad==='error'"><strong>{{f.severidad==='error'?'Bloqueo':'Advertencia'}} · {{agent(f.agente)}}:</strong> {{f.descripcion}} @if(f.archivo){<code>{{f.archivo}}</code>}</p>}@empty{<p class="muted">Sin observaciones.</p>}@if(!c.validacion.puede_publicar){<button class="button primary" [disabled]="busy()" (click)="autoFix(c)">{{busy()?'Corrigiendo…':'Corregir automáticamente'}}</button><p class="muted tiny">Vuelve a generar el producto pidiéndole al equipo que resuelva los bloqueos de arriba, sin que tengas que redactar instrucciones técnicas.</p>}
+<p class="tiny muted">Correcciones automáticas: {{c.correcciones_automaticas}} / 3</p>
 <h3>Consumo por agente</h3><div class="table-card"><table><thead><tr><th>Agente</th><th>Llamadas</th><th>Tokens entrada</th><th>Tokens salida</th><th>Tiempo</th></tr></thead><tbody>@for(row of usage();track row.agent){<tr><td>{{agent(row.agent)}}</td><td>{{row.llamadas}}</td><td>{{row.entrada|number}}</td><td>{{row.salida|number}}</td><td>{{(row.ms/1000)|number:'1.1-1'}} s</td></tr>}<tr><td><b>Total</b></td><td></td><td colspan="2"><b>{{totalTokens()|number}}</b></td><td></td></tr></tbody></table></div>
 <p><a [routerLink]="['/activity']" [queryParams]="{run:c.id_ejecucion}">Trazabilidad de esta versión</a></p>}
 }
@@ -64,7 +64,7 @@ const TABS=[{id:'resumen',label:'Producto'},{id:'archivos',label:'Archivos'},{id
 export class Construction implements OnDestroy {
  store=inject(Store);notifications=inject(Notifications);tabs=TABS;
  sources=signal<any[]>([]);versions=signal<any[]>([]);envelope=signal<any>(null);content=signal<any>(null);selectedVersion=signal(0);
- busy=signal(false);deploying=signal(false);runId=signal('');progress=signal('');tab=signal('resumen');filePath=signal('');fileContent=signal('');
+ busy=signal(false);deploying=signal(false);runId=signal('');progress=signal('');progressFailed=signal(false);tab=signal('resumen');filePath=signal('');fileContent=signal('');
  activity=signal<Record<string,{state:string;text:string}>>({});deployLog=signal<{label:string;state:string;text:string}[]>([]);
  sourceVersion=0;instructions='';reviewNote='';fileFilter='';private controller?:AbortController;
  steps=computed(()=>FLOW.map(agent=>({agent,label:AGENTS[agent],...(this.activity()[agent]||{state:'pendiente',text:'En espera'})})));
@@ -81,7 +81,14 @@ export class Construction implements OnDestroy {
  async loadVersion(version:number){const pid=this.store.project()?.id_proyecto;if(!pid||!version)return;try{const r=await this.store.api.request<any>(`${this.base(pid)}/${version}`);if(pid!==this.store.project()?.id_proyecto)return;this.envelope.set(r);this.content.set(r.payload);this.selectedVersion.set(version);this.filePath.set('');this.fileContent.set('');this.reviewNote='';}catch(e){this.store.api.showError(e);}}
  async openFile(path:string){const pid=this.store.project()?.id_proyecto;if(!pid)return;try{const f=await this.store.api.request<{contenido:string}>(`${this.base(pid)}/${this.selectedVersion()}/file?path=${encodeURIComponent(path)}`);this.filePath.set(path);this.fileContent.set(f.contenido);}catch(e){this.store.api.showError(e);}}
  download(){const url=URL.createObjectURL(new Blob([this.fileContent()],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=this.filePath().split('/').pop()||'archivo.txt';a.click();URL.revokeObjectURL(url);}
- async generate(){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.busy.set(true);this.activity.set({});try{const r=await this.store.api.request<any>(`${this.base(pid)}/generate`,'POST',{version_arquitectura:this.sourceVersion,id_solicitud:crypto.randomUUID(),instrucciones:this.instructions});await this.monitor(pid,r.id_ejecucion,false);}catch(e){this.store.api.showError(e);}finally{if(pid===this.store.project()?.id_proyecto)this.busy.set(false);}}
+ async autoFix(c:any){
+   const blocking=(c.validacion?.observaciones||[]).filter((f:any)=>f.severidad==='error');
+   if(!blocking.length)return;
+   this.sourceVersion=c.version_arquitectura_origen;
+   this.instructions='Corrige los siguientes bloqueos detectados por la validación automática:\n'+blocking.map((f:any)=>`- ${this.agent(f.agente)}: ${f.descripcion}${f.archivo?` (${f.archivo})`:''}`).join('\n');
+   await this.generate(true);
+ }
+ async generate(reuse=false){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.busy.set(true);this.progressFailed.set(false);this.activity.set({});try{const r=await this.store.api.request<any>(`${this.base(pid)}/generate`,'POST',{version_arquitectura:this.sourceVersion,id_solicitud:crypto.randomUUID(),instrucciones:this.instructions,reutilizar_candidato:reuse});await this.monitor(pid,r.id_ejecucion,false);}catch(e){this.store.api.showError(e);}finally{if(pid===this.store.project()?.id_proyecto)this.busy.set(false);}}
  async deploy(){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.deploying.set(true);this.deployLog.set([]);try{const r=await this.store.api.request<any>(`${this.base(pid)}/${this.selectedVersion()}/deploy`,'POST',{id_solicitud:crypto.randomUUID()});await this.monitor(pid,r.id_ejecucion,true);}catch(e){this.store.api.showError(e);}finally{if(pid===this.store.project()?.id_proyecto)this.deploying.set(false);}}
  async stop(){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.deploying.set(true);try{await this.store.api.request(`${this.base(pid)}/${this.selectedVersion()}/stop`,'POST');await this.loadVersion(this.selectedVersion());}catch(e){this.store.api.showError(e);}finally{this.deploying.set(false);}}
  async monitor(pid:string,run:string,deployment:boolean){this.controller?.abort();const controller=new AbortController();this.controller=controller;
@@ -92,7 +99,7 @@ export class Construction implements OnDestroy {
      if(AGENTS[data.componente]){const tokens=data.datos?.consumo?` · ${(data.datos.consumo.entrada||0)+(data.datos.consumo.salida||0)} tokens`:'';this.activity.update(a=>({...a,[data.componente]:{state:data.estado,text:(data.descripcion||'')+tokens}}));}},controller.signal);
    if(controller.signal.aborted||pid!==this.store.project()?.id_proyecto)return;
    const rows=await this.store.api.request<any[]>(this.base(pid));this.versions.set(rows);
-   if(!deployment){const result=await this.store.api.request<any>(`/projects/${pid}/executions/${run}`);this.progress.set(result.estado==='completado'?'Producto construido. Revísalo y monta el entorno local.':result.resultado?.error||'La ejecución se detuvo.');if(rows.length)await this.loadVersion(rows[0].version);}
+   if(!deployment){const result=await this.store.api.request<any>(`/projects/${pid}/executions/${run}`);const failed=result.estado!=='completado';this.progressFailed.set(failed);this.progress.set(failed?(result.resultado?.error||'La ejecución se detuvo.'):'Producto construido. Revísalo y monta el entorno local.');if(rows.length)await this.loadVersion(rows[0].version);}
    else await this.loadVersion(this.selectedVersion());
    void this.notifications.refresh();}
   catch(e){if(!controller.signal.aborted)this.store.api.showError(e);}finally{if(this.controller===controller){this.busy.set(false);this.deploying.set(false);}}}

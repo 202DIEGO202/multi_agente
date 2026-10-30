@@ -10,7 +10,6 @@ from psycopg.types.json import Jsonb
 from app.models.architecture import ArchitectureReview
 from app.models.schemas import normalized
 from app.services.diagrams import build_views, files
-from app.services.workflow_policy import automatic_approval_allowed
 
 SOFTWARE, INFRA, PLANNER = "arquitecto_software", "arquitecto_infraestructura", "planificador"
 
@@ -528,21 +527,6 @@ class ArchitectureService:
                     ),
                 ),
             )
-            if automatic_approval_allowed(
-                project["mode"],
-                content["validacion"]["puede_publicar"],
-                complete=bool(content.get("plan") and content["plan"].get("tareas")),
-            ):
-                note = "Validada automáticamente: arquitectura y plan técnico completos, sin bloqueos."
-                await conn.execute(
-                    "INSERT INTO architecture_decisions(project_id,version,status,note) VALUES(%s,%s,'validado_automaticamente',%s)",
-                    (pid, content["version_arquitectura"], note),
-                )
-                await conn.execute(
-                    "INSERT INTO events(execution_id,component,operation,status,description,data) "
-                    "VALUES(%s,'arquitectura','decision_automatica','validado_automaticamente',%s,%s)",
-                    (run_id, note, Jsonb({"version": content["version_arquitectura"], "validacion": content["validacion"]})),
-                )
         return content
 
     async def list(self, pid):

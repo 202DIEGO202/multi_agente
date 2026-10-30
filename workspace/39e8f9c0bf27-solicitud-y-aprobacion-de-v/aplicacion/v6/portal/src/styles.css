@@ -1,0 +1,26 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",Arial,sans-serif;background:#f4f6f8;color:#1f2933;line-height:1.5}
+nav,header.app-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:12px 24px;background:#0f4c5c;color:#fff}
+nav a,header.app-bar a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px}
+nav a:hover,nav a.active,header.app-bar a.active{background:rgba(255,255,255,.16)}
+main,.page{max-width:960px;margin:28px auto;padding:0 20px}
+h1,h2{color:#0f4c5c;margin:0 0 16px}
+.card,form{background:#fff;border:1px solid #dde3e8;border-radius:14px;padding:24px;box-shadow:0 6px 20px rgba(15,76,92,.06);margin-bottom:20px}
+form{display:grid;gap:16px;max-width:620px}
+.field,form label{display:grid;gap:6px;font-weight:600;font-size:14px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #c5cfd6;border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #2a9d8f;border-color:#2a9d8f}
+.error,.text-danger,small.error{color:#b42318;font-size:13px;font-weight:500}
+.success{background:#e7f6ee;color:#13653f;border:1px solid #b7e3c9;border-radius:8px;padding:10px 14px}
+.alert{background:#fdecea;color:#8f1d14;border:1px solid #f5c2bd;border-radius:8px;padding:10px 14px}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:0;border-radius:8px;background:#0f4c5c;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button:hover,.btn:hover{background:#0b3a46}
+button:disabled{background:#9fb3bb;cursor:not-allowed}
+button.secondary{background:#fff;color:#0f4c5c;border:1px solid #0f4c5c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #e6ebef}
+th{background:#eef3f5;font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:#486170}
+dl{display:grid;grid-template-columns:minmax(140px,30%) 1fr;gap:8px 16px}dt{font-weight:600;color:#486170}dd{margin:0}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#eef3f5;font-size:12px;font-weight:600}

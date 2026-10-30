@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from psycopg.types.json import Jsonb
+from pydantic import ValidationError as PydanticValidationError
 
 from app.models.schemas import (
     PREFIX,
@@ -128,8 +129,8 @@ class ProjectService:
     async def create(self, data):
         project_id = str(uuid4())
         await self.db.execute(
-            "INSERT INTO projects(id,name,description,mode) VALUES(%s,%s,%s,%s)",
-            (project_id, data.nombre, data.descripcion, data.modo),
+            "INSERT INTO projects(id,name,description,mode) VALUES(%s,%s,%s,'supervisado')",
+            (project_id, data.nombre, data.descripcion),
         )
         return await self.get(project_id)
 
@@ -365,11 +366,6 @@ class ProjectService:
                     errors.append("Hay contradicciones críticas pendientes de resolución")
                 proposal_id, item_id = str(uuid4()), None
                 status = "pendiente_aclaracion" if errors else "propuesto"
-                if project["mode"] == "automatico" and not errors:
-                    item_id = await self._apply(
-                        conn, project, change, run_id, message_id, "validado_automaticamente"
-                    )
-                    status = "validado_automaticamente"
                 await conn.execute(
                     "INSERT INTO proposals(id,project_id,execution_id,message_id,change,status,validation,"
                     "resulting_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",
@@ -641,6 +637,46 @@ class ProjectService:
             "reanalisis": reanalysis,
         }
 
+    async def answer_question(self, project_id, item_id, answer):
+        async with self.db.pool.connection() as conn, conn.transaction():
+            project = await (
+                await conn.execute("SELECT id FROM projects WHERE id=%s AND deleted_at IS NULL FOR UPDATE", (project_id,))
+            ).fetchone()
+            if not project:
+                raise LookupError("Proyecto no encontrado")
+            row = await (
+                await conn.execute(
+                    "SELECT payload FROM functional_items WHERE project_id=%s AND id=%s ORDER BY version DESC LIMIT 1",
+                    (project_id, item_id),
+                )
+            ).fetchone()
+            if not row:
+                raise LookupError("Pregunta no encontrada")
+            item = row["payload"]
+            if item["tipo"] != "pregunta_pendiente":
+                raise ValueError("Este elemento no es una pregunta pendiente")
+            if item["vigencia"] != "vigente":
+                raise ValueError("Esta pregunta ya fue resuelta")
+            execution = await (
+                await conn.execute("SELECT conversation_id FROM executions WHERE id=%s", (item["id_ejecucion"],))
+            ).fetchone()
+            conversation_id = execution["conversation_id"] if execution else None
+            if not conversation_id:
+                latest = await (
+                    await conn.execute(
+                        "SELECT id FROM conversations WHERE project_id=%s ORDER BY created_at DESC LIMIT 1", (project_id,)
+                    )
+                ).fetchone()
+                conversation_id = latest["id"] if latest else None
+            if not conversation_id:
+                raise ValueError("No hay una conversación activa para responder esta pregunta")
+        message = (
+            f"Respondo la pregunta pendiente {item_id} («{item['descripcion']}»): {answer}. "
+            "Actualiza los requisitos, actores, reglas, restricciones o decisiones según corresponda "
+            "y retira esta pregunta si con esta respuesta ya queda resuelta."
+        )
+        return {"id_conversacion": str(conversation_id), "mensaje": message}
+
     async def publish(self, project_id, human_approval):
         async with self.db.pool.connection() as conn, conn.transaction():
             project = await (
@@ -660,9 +696,9 @@ class ProjectService:
                 raise ValueError(
                     "Revise las propuestas y resuelva las contradicciones antes de publicar"
                 )
-            if project["mode"] == "supervisado" and not human_approval:
+            if not human_approval:
                 raise ValueError(
-                    "El modo supervisado requiere aprobación humana explícita para publicar"
+                    "Se requiere aprobación humana explícita para publicar"
                 )
             latest = await (
                 await conn.execute(
@@ -694,13 +730,26 @@ class ProjectService:
             for item in await current_items(conn, project_id):
                 if item["vigencia"] == "vigente":
                     groups[mapping[item["tipo"]]].append(item)
-            baseline = Baseline(
-                id_proyecto=str(project_id),
-                nombre_proyecto=project["name"],
-                version_linea_base=latest["version"],
-                estado="aprobado_por_humano" if human_approval else "validado_automaticamente",
-                **groups,
-            )
+            if not groups["requisitos"]:
+                raise ValueError(
+                    "Aún no hay requisitos funcionales o no funcionales consolidados. "
+                    "Continúa la conversación con el analista para definirlos y apruébalos "
+                    "antes de publicar la línea base."
+                )
+            try:
+                baseline = Baseline(
+                    id_proyecto=str(project_id),
+                    nombre_proyecto=project["name"],
+                    version_linea_base=latest["version"],
+                    estado="aprobado_por_humano" if human_approval else "validado_automaticamente",
+                    **groups,
+                )
+            except PydanticValidationError as exc:
+                raise ValueError(
+                    "No fue posible generar la línea base porque los elementos consolidados "
+                    "son inconsistentes entre sí. Revisa los requisitos, actores y demás "
+                    "elementos vigentes del proyecto e inténtalo de nuevo."
+                ) from exc
             payload = baseline.model_dump(mode="json")
             await conn.execute(
                 "INSERT INTO baselines(project_id,version,payload) VALUES(%s,%s,%s)",

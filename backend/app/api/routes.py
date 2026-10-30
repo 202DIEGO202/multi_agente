@@ -16,6 +16,7 @@ from app.models.schemas import (
     MessageCreate,
     ProjectCreate,
     PublishBaseline,
+    QuestionAnswer,
     Review,
 )
 from app.services.events import sse
@@ -150,6 +151,17 @@ async def resolve(project_id: UUID, conflict_id: UUID, data: ConflictResolution,
         except UniqueViolation:
             pass  # Hay un análisis en curso en esa conversación; el usuario puede pedirlo después.
     return result
+
+
+@router.post("/projects/{project_id}/items/{item_id}/answer", status_code=202)
+async def answer_question(project_id: UUID, item_id: str, data: QuestionAnswer, request: Request):
+    await request.app.state.projects.get(project_id)
+    result = await request.app.state.projects.answer_question(project_id, item_id, data.respuesta)
+    try:
+        run_id = await start_chat(request, project_id, UUID(result["id_conversacion"]), result["mensaje"])
+    except UniqueViolation:
+        raise HTTPException(409, "Hay un análisis en curso en esa conversación; inténtelo de nuevo en unos segundos.")
+    return {"id_ejecucion_reanalisis": run_id, "id_conversacion": result["id_conversacion"]}
 
 
 @router.post("/projects/{project_id}/baselines", status_code=201)

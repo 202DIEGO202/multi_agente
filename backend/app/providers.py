@@ -71,11 +71,15 @@ class Models:
         self.settings = settings
         self.client = httpx.AsyncClient(timeout=settings.llm_timeout)
 
-    async def _post(self, url, body, headers):
-        """POST con reintentos ante errores transitorios. Nunca reintenta errores del cliente."""
+    async def _post(self, url, body, headers, timeout=None):
+        """POST con reintentos ante errores transitorios. Nunca reintenta errores del cliente.
+
+        timeout, si se entrega, reemplaza solo esta llamada (por ejemplo, construcción con Sol
+        necesita más margen que el resto de fases)."""
+        kwargs = {} if timeout is None else {"timeout": timeout}
         for attempt in range(RETRY_ATTEMPTS):
             try:
-                response = await self.client.post(url, json=body, headers=headers)
+                response = await self.client.post(url, json=body, headers=headers, **kwargs)
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 if attempt + 1 >= RETRY_ATTEMPTS:
                     raise ProviderError(f"La API no respondió ({type(exc).__name__}).") from exc
@@ -92,7 +96,7 @@ class Models:
             return response
         raise ProviderError("La API no respondió tras varios intentos.")
 
-    def _config(self, rewrite=False):
+    def _config(self, rewrite=False, construction=False):
         s = self.settings
         if rewrite:
             return (
@@ -100,6 +104,10 @@ class Models:
                 s.rewrite_model or s.llm_model,
                 s.rewrite_api_key if s.rewrite_api_key.get_secret_value() else s.llm_api_key,
             )
+        if construction:
+            # Misma API/clave que el resto de fases; solo el modelo cambia, para poder usar
+            # uno más robusto específicamente donde se genera código real.
+            return s.llm_base_url, s.construction_model or s.llm_model, s.llm_api_key
         return s.llm_base_url, s.llm_model, s.llm_api_key
 
     @staticmethod
@@ -121,6 +129,7 @@ class Models:
         messages: list[dict],
         schema: type[BaseModel],
         rewrite=False,
+        construction=False,
         max_tokens=None,
         max_attempts=2,
         usage: dict | None = None,
@@ -128,7 +137,7 @@ class Models:
         """usage, si se entrega, acumula los tokens reales que informa la API."""
         if max_attempts not in (1, 2):
             raise ValueError("El límite de intentos debe ser 1 o 2")
-        base, model, key = self._config(rewrite)
+        base, model, key = self._config(rewrite, construction)
         self._require(base, model)
         style = (
             (self.settings.rewrite_api_style or self.settings.llm_api_style)
@@ -167,7 +176,6 @@ class Models:
                 "input": messages,
                 "stream": False,
                 "store": False,
-                "temperature": 0,
                 "max_output_tokens": max_tokens or self.settings.llm_max_tokens,
                 "text": {
                     "format": {
@@ -178,9 +186,12 @@ class Models:
                     }
                 },
             }
+        request_timeout = self.settings.construction_timeout if construction else None
         try:
             for attempt in range(max_attempts):
-                response = await self._post(base.rstrip("/") + path, body, self._headers(key, auth))
+                response = await self._post(
+                    base.rstrip("/") + path, body, self._headers(key, auth), timeout=request_timeout
+                )
                 data = response.json()
                 if usage is not None:
                     reported = data.get("usage") or {}
@@ -190,11 +201,19 @@ class Models:
                     usage["salida"] = usage.get("salida", 0) + int(
                         reported.get("output_tokens", reported.get("completion_tokens", 0)) or 0
                     )
-                text = (
-                    response_text(data)
-                    if style == "responses"
-                    else data["choices"][0]["message"]["content"]
-                )
+                try:
+                    text = (
+                        response_text(data)
+                        if style == "responses"
+                        else data["choices"][0]["message"]["content"]
+                    )
+                except ProviderError:
+                    # Respuesta incompleta (p. ej. el razonamiento del modelo agotó el
+                    # presupuesto de tokens antes de terminar el JSON): no es un error de
+                    # contrato, así que reintenta igual que una validación fallida.
+                    if attempt + 1 >= max_attempts:
+                        raise
+                    continue
                 try:
                     return schema.model_validate_json(text)
                 except ValidationError as validation:
@@ -239,7 +258,6 @@ class Models:
                 "input": messages,
                 "stream": True,
                 "store": False,
-                "temperature": self.settings.llm_temperature,
                 "max_output_tokens": self.settings.llm_max_tokens,
             }
         completed = False

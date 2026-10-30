@@ -1,0 +1,1 @@
+"""API interna de solicitudes de ausencia."""
