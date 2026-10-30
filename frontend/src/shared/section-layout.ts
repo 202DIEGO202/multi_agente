@@ -24,7 +24,7 @@ export class SectionLayout {
   {path:'/backlog',number:3,label:'Generación de backlog',subtitle:'Épicas, features e historias',detail:'Depende de una línea base publicada en Estado del proyecto. Revisa y publica el backlog para pasar al diseño.'},
   {path:'/mockups',number:4,label:'Diseño funcional',subtitle:'Pantallas y mockups',detail:'Depende de un backlog aprobado y publicado. Aquí generas, revisas y publicas sus pantallas.'},
   {path:'/architecture',number:5,label:'Arquitectura',subtitle:'Calidad, C4 e infraestructura',detail:'Depende de un backlog publicado (y usa los mockups aprobados). Genera arquitectura, diagramas, archivos de despliegue y plan técnico.'},
-  {path:'/construction',number:6,label:'Construcción',subtitle:'Código, pruebas, IaC y entorno',detail:'Depende de una arquitectura aprobada. Los agentes construyen el producto, lo validan y lo montan en local; recibirás una notificación al terminar.'}
+  {path:'/construction',number:6,label:'Construcción',subtitle:'Código, pruebas, IaC y entorno',detail:'Depende de una arquitectura aprobada. Los agentes construyen el producto, lo validan y lo montan en local; si hay un servidor remoto configurado, al aprobar también se despliega ahí automáticamente. Recibirás una notificación al terminar.'}
  ];
  private resources=[
   {path:'/knowledge',number:0,label:'Conocimiento',subtitle:'Documentos y fuentes',detail:''},

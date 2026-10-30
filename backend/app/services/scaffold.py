@@ -213,22 +213,32 @@ def backend_scaffold():
 
 
 def edge_conf(has_panel):
-    """Balanceador: cada aplicación en su puerto y /api siempre hacia el backend privado."""
-    portal = (
-        "server {\n  listen 8080;\n"
-        "  location /api/ {\n    proxy_pass http://backend:8000;\n"
-        "    proxy_set_header Host $host;\n    proxy_set_header Authorization $http_authorization;\n  }\n"
-        "  location / {\n    proxy_pass http://portal:80;\n    proxy_set_header Host $host;\n  }\n}\n"
-    )
-    if not has_panel:
-        return portal
-    panel = portal.replace("listen 8080", "listen 8081").replace(
-        "http://portal:80", "http://panel:80"
-    )
-    return portal + "\n" + panel
+    """Balanceador: cada aplicación en su puerto y /api siempre hacia el backend privado.
+
+    Usa un resolver dinámico (resolver + proxy_pass con variable) para que nginx no se
+    caiga al iniciar si un upstream todavía no es resoluble (carrera de arranque típica
+    de Docker Compose: nginx normalmente resuelve una sola vez al arrancar); así reintenta
+    la resolución en cada petición en vez de morir con "host not found in upstream".
+    """
+
+    def server(port, frontend_name):
+        return (
+            "server {\n  listen " + str(port) + ";\n"
+            "  resolver 127.0.0.11 valid=10s;\n"
+            "  set $backend_upstream http://backend:8000;\n"
+            "  set $frontend_upstream http://" + frontend_name + ":80;\n"
+            "  location /api/ {\n    proxy_pass $backend_upstream;\n"
+            "    proxy_set_header Host $host;\n    proxy_set_header Authorization $http_authorization;\n  }\n"
+            "  location / {\n    proxy_pass $frontend_upstream;\n    proxy_set_header Host $host;\n  }\n}\n"
+        )
+
+    conf = server(8080, "portal")
+    if has_panel:
+        conf += "\n" + server(8081, "panel")
+    return conf
 
 
-def compose_file(project, has_panel, root=".", publish=False):
+def compose_file(project, has_panel, root=".", publish=False, bind_host="127.0.0.1"):
     """Compose del producto. root = ruta a la carpeta del producto desde el archivo generado."""
     frontends = [PORTAL] + ([PANEL] if has_panel else [])
     lines = [
@@ -283,9 +293,9 @@ def compose_file(project, has_panel, root=".", publish=False):
         lines += [f"      {name}:", "        condition: service_healthy"]
     if publish:
         lines.append("    ports:")
-        lines.append('      - "127.0.0.1:${PORTAL_PORT:-8100}:8080"')
+        lines.append(f'      - "{bind_host}:${{PORTAL_PORT:-8100}}:8080"')
         if has_panel:
-            lines.append('      - "127.0.0.1:${PANEL_PORT:-8101}:8081"')
+            lines.append(f'      - "{bind_host}:${{PANEL_PORT:-8101}}:8081"')
     lines += [
         "    healthcheck:",
         '      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]',

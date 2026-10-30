@@ -13,6 +13,7 @@ from app.services.construction_rules import aplicaciones, is_privileged
 from app.services.diagrams import build_views
 from app.services.diagrams import files as architecture_files
 from app.services.instance import InstanceDeployer
+from app.services.remote_deploy import RemoteDeployer
 from app.services.scaffold import STACK, project_key, readme_app, scaffold_files, slug
 
 __all__ = ["ConstructionService", "build_context", "project_key", "scaffold_files"]
@@ -176,6 +177,7 @@ class ConstructionService:
         self.db, self.events, self.settings = db, events, settings
         self.mockups = mockups
         self.instances = InstanceDeployer(events, ROOT)
+        self.remote = RemoteDeployer(events, ROOT, settings)
 
     def base(self, project):
         return Path(self.settings.workspace_dir) / slug(project)
@@ -488,7 +490,76 @@ class ConstructionService:
                 "INSERT INTO construction_decisions(project_id,version,status,note) VALUES(%s,%s,%s,%s)",
                 (pid, version, status, review.nota),
             )
-        return await self.get(pid, version)
+        result = await self.get(pid, version)
+        if status == "aprobado_por_humano" and self.settings.deploy_remote_enabled:
+            remote_run_id, created = await self.start_remote_deploy(pid, version)
+            if created:
+                result["despliegue_remoto_id_ejecucion"] = remote_run_id
+        return result
+
+    async def start_remote_deploy(self, pid, version):
+        """Crea la ejecución para el despliegue remoto automático tras una aprobación.
+        No hace nada si ya hay un despliegue remoto en curso para este proyecto."""
+        async with self.db.pool.connection() as conn, conn.transaction():
+            await conn.execute("SELECT id FROM projects WHERE id=%s FOR UPDATE", (pid,))
+            if await (await conn.execute(
+                "SELECT 1 FROM executions WHERE project_id=%s AND kind='despliegue_remoto' "
+                "AND status IN ('pendiente','ejecutando')",
+                (pid,),
+            )).fetchone():
+                return None, False
+            run_id = str(uuid4())
+            await conn.execute(
+                "INSERT INTO executions(id,project_id,kind,input) VALUES(%s,%s,'despliegue_remoto',%s)",
+                (run_id, pid, Jsonb({"version": version})),
+            )
+        return run_id, True
+
+    async def deploy_remote(self, pid, version, run_id):
+        """Despliega automáticamente en el servidor remoto configurado (DEPLOY_REMOTE_*)
+        tras una aprobación humana. Nunca interrumpe ni reemplaza la instancia local."""
+        await self.events.status(run_id, "ejecutando")
+        content = (await self.get(pid, version))["payload"]
+        name = content.get("workspace_key", content["nombre_proyecto"])
+        try:
+            result = await self.remote.deploy(
+                run_id,
+                slug(name),
+                version,
+                self.candidate_dir(name, version),
+                "panel" in content["aplicaciones"],
+            )
+        except Exception as exc:
+            result = {"estado": "error", "error": type(exc).__name__, "pasos": [], "urls": {}}
+        status = result["estado"]
+        docs = self.base(name) / "entregables" / f"v{version}"
+        docs.mkdir(parents=True, exist_ok=True)
+        titles = {
+            "completado": f"Despliegue remoto v{version} listo",
+            "con_fallos": f"Despliegue remoto v{version} arriba con pruebas fallidas",
+            "error": f"No se pudo desplegar remotamente la v{version}",
+        }
+        urls = result.get("urls", {})
+        message = (
+            f"Portal: {urls.get('portal')}"
+            + (f" · Panel: {urls['panel']}" if urls.get("panel") else "")
+            + f" · Pruebas: {result.get('pruebas', 'no ejecutadas')}"
+            if status != "error"
+            else "Revise el detalle de la ejecución en Actividad de IA."
+        )
+        (docs / "resultado-despliegue-remoto.md").write_text(
+            f"# Despliegue remoto v{version}\n\nEstado: **{status}**\n\n"
+            + "".join(f"- {key}: {value}\n" for key, value in urls.items())
+            + f"- Pruebas: {result.get('pruebas', 'no ejecutadas')}\n"
+            + f"- Variables de administración: {result.get('admin_env', '')}\n\n"
+            + "\n".join(
+                f"## {p['paso']} ({'ok' if p['ok'] else 'falló'})\n```\n{p['detalle']}\n```"
+                for p in result.get("pasos", [])
+            ),
+            encoding="utf-8",
+        )
+        await self.notify(pid, "despliegue_remoto", titles.get(status, titles["error"]), message, "/construction", run_id)
+        await self.events.status(run_id, "completado" if status != "error" else "error", result)
 
     async def start_deploy(self, pid, version, request_id):
         content = (await self.get(pid, version))["payload"]

@@ -104,7 +104,12 @@ async def get_file(project_id: UUID, version: int, path: str, request: Request):
 
 @router.post("/{version}/review")
 async def review(project_id: UUID, version: int, data: ReviewConstruction, request: Request):
-    return await request.app.state.construction.review(project_id, version, data)
+    service = request.app.state.construction
+    result = await service.review(project_id, version, data)
+    remote_run_id = result.pop("despliegue_remoto_id_ejecucion", None)
+    if remote_run_id:
+        spawn(request, service.deploy_remote(project_id, version, remote_run_id))
+    return result
 
 
 @router.post("/{version}/deploy", status_code=202)

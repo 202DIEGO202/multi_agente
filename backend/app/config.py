@@ -77,6 +77,14 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:4200", "http://127.0.0.1:4200"]
     storage_dir: Path = ROOT / "storage"
     max_upload_mb: int = 20
+    # Despliegue remoto automático tras aprobar una construcción (opcional).
+    # Si deploy_remote_enabled es false, esta función no hace nada (no-op seguro).
+    deploy_remote_enabled: bool = False
+    deploy_remote_host: str = ""
+    deploy_remote_user: str = "ubuntu"
+    deploy_remote_key_path: str = ""
+    deploy_remote_base_dir: str = "~/despliegues"
+    deploy_remote_base_port: int = Field(default=8200, ge=1, le=65000)
 
     @model_validator(mode="after")
     def validate_chunking(self):

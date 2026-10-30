@@ -103,5 +103,5 @@ export class Construction implements OnDestroy {
    else await this.loadVersion(this.selectedVersion());
    void this.notifications.refresh();}
   catch(e){if(!controller.signal.aborted)this.store.api.showError(e);}finally{if(this.controller===controller){this.busy.set(false);this.deploying.set(false);}}}
- async review(action:string){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.busy.set(true);try{this.envelope.set(await this.store.api.request<any>(`${this.base(pid)}/${this.selectedVersion()}/review`,'POST',{accion:action,nota:this.reviewNote}));this.versions.set(await this.store.api.request<any[]>(this.base(pid)));}catch(e){this.store.api.showError(e);}finally{this.busy.set(false);}}
+ async review(action:string){const pid=this.store.project()?.id_proyecto;if(!pid)return;this.busy.set(true);try{const r=await this.store.api.request<any>(`${this.base(pid)}/${this.selectedVersion()}/review`,'POST',{accion:action,nota:this.reviewNote});const remoteRun=r.despliegue_remoto_id_ejecucion;delete r.despliegue_remoto_id_ejecucion;this.envelope.set(r);this.versions.set(await this.store.api.request<any[]>(this.base(pid)));if(remoteRun)this.monitor(pid,remoteRun,true);}catch(e){this.store.api.showError(e);}finally{this.busy.set(false);}}
 }

@@ -269,4 +269,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_active_construction ON executions(project_
 CREATE UNIQUE INDEX IF NOT EXISTS construction_request ON executions(project_id,request_id) WHERE kind='construccion';
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_deployment ON executions(project_id)
  WHERE status IN ('pendiente','ejecutando') AND kind='despliegue';
-INSERT INTO schema_versions(version) VALUES(8) ON CONFLICT DO NOTHING;
+CREATE UNIQUE INDEX IF NOT EXISTS one_active_remote_deployment ON executions(project_id)
+ WHERE status IN ('pendiente','ejecutando') AND kind='despliegue_remoto';
+INSERT INTO schema_versions(version) VALUES(9) ON CONFLICT DO NOTHING;

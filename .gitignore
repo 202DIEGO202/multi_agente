@@ -19,3 +19,8 @@ workspace/*/aplicacion/*/.env
 workspace/**/.env
 infraestructura-local/instancias/**/.env
 infraestructura-local/instancias/**/compose.yaml
+
+# Clave SSH privada para el despliegue (nunca debe subirse al repo)
+trama_ovh
+trama_ovh.pub
+.DS_Store
